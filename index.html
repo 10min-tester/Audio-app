@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audio Restoration AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-color: #e2e8f0;
+  --text-primary: #1e293b;
+  --accent-color: #3b82f6;
+  --accent-hover: #2563eb;
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(0, 0, 0, 0.05);
+  --error: #ef4444;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0; padding: 20px 0;
+  background: radial-gradient(circle at top, #f8fafc, #e2e8f0);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+.container {
+  width: 90%;
+  max-width: 600px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+  text-align: center;
+  transition: box-shadow 0.3s ease;
+}
+.container:hover { box-shadow: 0 20px 45px rgba(0,0,0,0.08); }
+
+h1 {
+  font-size: 2.2rem;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+}
+p.subtitle { color: #64748b; margin-bottom: 32px; font-size: 0.95rem; }
+
+/* Upload */
+.upload-area {
+  border: 2px dashed var(--glass-border);
+  border-radius: 16px;
+  padding: 40px 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.upload-area:hover, .upload-area.dragover {
+  border-color: var(--accent-color);
+  background: rgba(59,130,246,0.05);
+}
+.upload-area input[type="file"] {
+  position: absolute; top:0; left:0; width:100%; height:100%;
+  opacity:0; cursor:pointer;
+}
+.upload-area .icon { font-size: 48px; margin-bottom: 16px; }
+
+/* Preset */
+.preset-row {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; margin-bottom: 18px;
+  background: rgba(255,255,255,0.45);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px; padding: 10px 12px;
+}
+.preset-row label { font-size: 0.92rem; font-weight: 600; }
+.preset-row select {
+  border: 1px solid rgba(0,0,0,0.1); border-radius: 8px;
+  background: #fff; font-size: 0.86rem; padding: 8px 10px;
+}
+
+/* Badges */
+.plan-source-badge {
+  margin-bottom: 16px; padding: 8px 10px;
+  border: 1px solid var(--glass-border); border-radius: 10px;
+  font-size: 0.82rem; font-weight: 600; color: #475569;
+  background: rgba(255,255,255,0.45); text-align: left;
+}
+.plan-source-badge.active { color: #065f46; border-color: rgba(16,185,129,0.35); background: rgba(16,185,129,0.12); }
+
+/* Options */
+.options-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; text-align: left; margin-bottom: 24px;
+}
+@media (max-width: 480px) { .options-grid { grid-template-columns: 1fr; } }
+
+.toggle-container {
+  display: flex; justify-content: space-between; align-items: center;
+  background: rgba(255,255,255,0.4); padding: 12px 16px;
+  border-radius: 12px; border: 1px solid var(--glass-border);
+}
+.toggle-container span { font-size: 0.95rem; font-weight: 600; display: flex; flex-direction: column; }
+.toggle-container small { font-size: 0.75rem; font-weight: 400; color: #64748b; margin-top: 2px; }
+
+.switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+.switch input { opacity:0; width:0; height:0; }
+.slider {
+  position: absolute; cursor: pointer;
+  top:0; left:0; right:0; bottom:0;
+  background-color: #cbd5e1; transition: .4s;
+}
+.slider:before {
+  position: absolute; content: "";
+  height: 18px; width: 18px; left: 3px; bottom: 3px;
+  background: white; transition: .4s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+input:checked + .slider { background-color: var(--accent-color); }
+input:checked + .slider:before { transform: translateX(20px); }
+.slider.round { border-radius: 24px; }
+.slider.round:before { border-radius: 50%; }
+
+.control-group { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.intensity-slider {
+  -webkit-appearance: none; width: 80px; height: 4px;
+  background: rgba(0,0,0,0.1); border-radius: 2px; outline: none;
+}
+.intensity-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 12px; height: 12px;
+  border-radius: 50%; background: var(--accent-color); cursor: pointer;
+}
+
+/* Warning */
+.warning-box {
+  background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.4);
+  color: #b45309; padding: 12px 16px; border-radius: 12px;
+  margin-bottom: 24px; font-size: 0.85rem; font-weight: 600;
+  text-align: left; line-height: 1.4;
+  animation: fadeIn 0.3s ease;
+}
+.warning-box.danger { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.4); color: #b91c1c; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
+
+/* Button */
+.primary-btn {
+  background: var(--accent-color); color: #fff; border: none;
+  padding: 14px 28px; font-size: 1rem; font-weight: 600;
+  border-radius: 50px; cursor: pointer; width: 100%;
+  box-shadow: 0 4px 14px rgba(59,130,246,0.39);
+  transition: background 0.3s, transform 0.2s;
+}
+.primary-btn:hover { background: var(--accent-hover); transform: translateY(-2px); }
+.primary-btn:active { transform: translateY(0); }
+.primary-btn:disabled { background: #cbd5e1; color: #64748b; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* Loader */
+.loader-container { display: none; margin-top: 24px; }
+.loader {
+  border: 3px solid rgba(0,0,0,0.05); border-radius: 50%;
+  border-top: 3px solid var(--accent-color);
+  width: 24px; height: 24px;
+  animation: spin 1s linear infinite; margin: 0 auto;
+}
+@keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
+.status-text { margin-top: 12px; font-size: 0.9rem; color: #64748b; }
+
+/* Progress bar */
+.progress-wrap {
+  margin-top: 12px;
+  height: 6px; background: rgba(0,0,0,0.08); border-radius: 3px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, #3b82f6, #7c3aed);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* Spectrum */
+.spectrum-wrap {
+  display: none; margin-top: 16px;
+}
+.spectrum-wrap.show { display: block; }
+.spec-label {
+  font-size: 0.7rem; color: #94a3b8;
+  display: flex; justify-content: space-between;
+  margin-bottom: 4px;
+}
+canvas#spectrum {
+  display: block; width: 100%; height: 70px;
+  background: rgba(15,23,42,0.06);
+  border-radius: 8px; border: 1px solid var(--glass-border);
+}
+
+/* Result */
+.result-area {
+  display: none; margin-top: 32px; text-align: left;
+  border-top: 1px solid var(--glass-border); padding-top: 24px;
+}
+.audio-player { width: 100%; margin-top: 8px; outline: none; }
+
+.analysis-report {
+  background: var(--glass-bg); border: 1px solid var(--glass-border);
+  border-radius: 12px; padding: 16px; margin: 20px 0; text-align: left;
+}
+.analysis-report h4 { margin: 0 0 12px; font-size: 1rem; }
+.metric { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
+.metric .label { color: #64748b; }
+.metric .value { font-weight: 600; }
+.metric .value.good { color: #15803d; }
+.metric .value.warning { color: #b45309; }
+.metric .value.danger { color: #b91c1c; }
+
+.feedback-box {
+  margin-top: 12px; padding-top: 12px;
+  border-top: 1px dashed rgba(0,0,0,0.1);
+  font-size: 0.85rem; color: #334155; line-height: 1.6;
+}
+
+.download-btn {
+  display: inline-block; margin-top: 16px; text-decoration: none;
+  background: rgba(59,130,246,0.1); color: var(--accent-color);
+  font-weight: 600; padding: 10px 20px; border-radius: 8px; font-size: 0.9rem;
+  transition: background 0.3s;
+}
+.download-btn:hover { background: rgba(59,130,246,0.2); }
+
+.feedback-actions { margin-top: 12px; display: flex; gap: 8px; }
+.feedback-btn {
+  border: 1px solid var(--glass-border); background: rgba(255,255,255,0.6);
+  color: var(--text-primary); padding: 8px 10px;
+  border-radius: 8px; cursor: pointer; font-size: 0.82rem;
+  transition: background 0.2s;
+}
+.feedback-btn:hover { background: rgba(59,130,246,0.08); }
+.feedback-status { margin-top: 8px; font-size: 0.82rem; color: #475569; }
+
+/* Offline badge */
+.offline-badge {
+  display: inline-block; margin-bottom: 12px;
+  background: rgba(16,185,129,0.12); color: #065f46;
+  border: 1px solid rgba(16,185,129,0.3);
+  border-radius: 20px; padding: 4px 12px;
+  font-size: 0.75rem; font-weight: 600;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="offline-badge">⚡ 100% 브라우저 처리 · 서버 불필요</div>
+  <h1>Audio Restoration AI</h1>
+  <p class="subtitle">Restore and enhance audio quality — entirely in your browser, no server needed.</p>
+
+  <form id="upload-form">
+    <div class="upload-area" id="drop-zone">
+      <div class="icon">🎧</div>
+      <div id="file-name-display">Drag & Drop or Click to Select File</div>
+      <input type="file" id="audio-file" accept="audio/*" required>
+    </div>
+
+    <!-- Spectrum preview -->
+    <div class="spectrum-wrap" id="specWrap">
+      <div class="spec-label"><span>SPECTRUM</span><span>20Hz ——— 20kHz</span></div>
+      <canvas id="spectrum" width="520" height="70"></canvas>
+    </div>
+
+    <div class="preset-row">
+      <label for="quality-preset">Quality Preset</label>
+      <select id="quality-preset">
+        <option value="music_balanced" selected>Music Balanced (기본)</option>
+        <option value="voice_clean">Voice Clean (보컬/대화)</option>
+        <option value="compressed_repair">Compressed Repair (저비트레이트 복원)</option>
+      </select>
+    </div>
+
+    <div id="plan-source-badge" class="plan-source-badge">Mode: 브라우저 Web Audio API</div>
+
+    <div class="options-grid">
+      <label class="toggle-container">
+        <span>Super Resolution <small>(Restore Highs)</small></span>
+        <div class="control-group">
+          <label class="switch"><input type="checkbox" id="opt-super-res" checked><span class="slider round"></span></label>
+          <input type="range" id="val-super-res" min="0" max="100" value="45" class="intensity-slider">
+        </div>
+      </label>
+      <label class="toggle-container">
+        <span>Noise Reduction <small>(Clean Background)</small></span>
+        <div class="control-group">
+          <label class="switch"><input type="checkbox" id="opt-noise-reduction" checked><span class="slider round"></span></label>
+          <input type="range" id="val-noise-reduction" min="0" max="100" value="50" class="intensity-slider">
+        </div>
+      </label>
+      <label class="toggle-container">
+        <span>Low Cut (High-pass) <small>(Remove low rumble)</small></span>
+        <div class="control-group">
+          <label class="switch"><input type="checkbox" id="opt-highpass" checked><span class="slider round"></span></label>
+          <input type="range" id="val-highpass" min="20" max="200" value="70" class="intensity-slider">
+        </div>
+      </label>
+      <label class="toggle-container">
+        <span>Punchy Bass <small>(Add Transient Energy)</small></span>
+        <div class="control-group">
+          <label class="switch"><input type="checkbox" id="opt-punchy-bass" checked><span class="slider round"></span></label>
+          <input type="range" id="val-punchy-bass" min="0" max="100" value="45" class="intensity-slider">
+        </div>
+      </label>
+      <label class="toggle-container">
+        <span>Brilliance <small>(Harmonic Exciter)</small></span>
+        <div class="control-group">
+          <label class="switch"><input type="checkbox" id="opt-brilliance" checked><span class="slider round"></span></label>
+          <input type="range" id="val-brilliance" min="0" max="100" value="35" class="intensity-slider">
+        </div>
+      </label>
+      <label class="toggle-container">
+        <span>Stereo Widener <small>(Spatial Expansion)</small></span>
+        <div class="control-group">
+          <label class="switch"><input type="checkbox" id="opt-stereo" checked><span class="slider round"></span></label>
+          <input type="range" id="val-stereo" min="0" max="100" value="35" class="intensity-slider">
+        </div>
+      </label>
+      <label class="toggle-container">
+        <span>Loudness Maximizer <small>(Limiter)</small></span>
+        <div class="control-group">
+          <label class="switch"><input type="checkbox" id="opt-limiter" checked><span class="slider round"></span></label>
+          <input type="range" id="val-limiter" min="0" max="100" value="65" class="intensity-slider">
+        </div>
+      </label>
+    </div>
+
+    <div id="warning-box" class="warning-box" style="display:none"></div>
+    <button type="submit" id="submit-btn" class="primary-btn" disabled>✨ Restore Audio</button>
+  </form>
+
+  <div class="loader-container" id="loader">
+    <div class="loader"></div>
+    <div class="status-text" id="status-text">Processing...</div>
+    <div class="progress-wrap"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+
+  <div class="result-area" id="result-area">
+    <h3>✅ Restoration Complete!</h3>
+
+    <div class="analysis-report">
+      <h4>📊 오디오 분석 리포트</h4>
+      <div class="metric">
+        <span class="label">체감 볼륨 (RMS):</span>
+        <span id="metric-rms" class="value">--</span>
+      </div>
+      <div class="metric">
+        <span class="label">다이내믹스 (Peak/RMS):</span>
+        <span id="metric-crest" class="value">--</span>
+      </div>
+      <div class="metric">
+        <span class="label">처리 시간:</span>
+        <span id="metric-time" class="value">--</span>
+      </div>
+      <div class="metric">
+        <span class="label">적용된 효과:</span>
+        <span id="metric-effects" class="value">--</span>
+      </div>
+      <div id="analysis-feedback" class="feedback-box"></div>
+    </div>
+
+    <p style="color:#64748b;font-size:0.9rem;margin-top:24px;margin-bottom:8px">Original Audio:</p>
+    <audio id="original-player" class="audio-player" controls></audio>
+
+    <p style="color:#64748b;font-size:0.9rem;margin-top:16px;margin-bottom:8px">Restored Audio:</p>
+    <audio id="restored-player" class="audio-player" controls></audio>
+
+    <div class="feedback-actions">
+      <button type="button" class="feedback-btn" data-feedback="good">👍 좋음</button>
+      <button type="button" class="feedback-btn" data-feedback="neutral">😐 보통</button>
+      <button type="button" class="feedback-btn" data-feedback="bad">👎 별로</button>
+    </div>
+    <div id="feedback-status" class="feedback-status"></div>
+
+    <a href="#" id="download-link" class="download-btn" download>📥 Download Restored Audio (.wav)</a>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// AUDIO RESTORATION AI — Serverless Web Audio API Engine
+// ============================================================
+
+const PRESET_VALUES = {
+  music_balanced: {
+    "opt-super-res": true,  "val-super-res": 45,
+    "opt-noise-reduction": true, "val-noise-reduction": 50,
+    "opt-highpass": true,   "val-highpass": 70,
+    "opt-punchy-bass": true,"val-punchy-bass": 45,
+    "opt-brilliance": true, "val-brilliance": 35,
+    "opt-stereo": true,     "val-stereo": 35,
+    "opt-limiter": true,    "val-limiter": 65,
+  },
+  voice_clean: {
+    "opt-super-res": true,  "val-super-res": 40,
+    "opt-noise-reduction": true, "val-noise-reduction": 68,
+    "opt-highpass": true,   "val-highpass": 95,
+    "opt-punchy-bass": false,"val-punchy-bass": 20,
+    "opt-brilliance": true, "val-brilliance": 30,
+    "opt-stereo": false,    "val-stereo": 20,
+    "opt-limiter": true,    "val-limiter": 55,
+  },
+  compressed_repair: {
+    "opt-super-res": true,  "val-super-res": 62,
+    "opt-noise-reduction": true, "val-noise-reduction": 55,
+    "opt-highpass": true,   "val-highpass": 80,
+    "opt-punchy-bass": true,"val-punchy-bass": 35,
+    "opt-brilliance": true, "val-brilliance": 40,
+    "opt-stereo": true,     "val-stereo": 28,
+    "opt-limiter": true,    "val-limiter": 50,
+  }
+};
+
+// ---- DOM refs ----
+const dropZone      = document.getElementById('drop-zone');
+const fileInput     = document.getElementById('audio-file');
+const fileNameDisp  = document.getElementById('file-name-display');
+const submitBtn     = document.getElementById('submit-btn');
+const form          = document.getElementById('upload-form');
+const loader        = document.getElementById('loader');
+const statusText    = document.getElementById('status-text');
+const progressFill  = document.getElementById('progress-fill');
+const resultArea    = document.getElementById('result-area');
+const origPlayer    = document.getElementById('original-player');
+const restPlayer    = document.getElementById('restored-player');
+const downloadLink  = document.getElementById('download-link');
+const qualityPreset = document.getElementById('quality-preset');
+const feedbackStat  = document.getElementById('feedback-status');
+const analysisFeedback = document.getElementById('analysis-feedback');
+const specWrap      = document.getElementById('specWrap');
+const specCanvas    = document.getElementById('spectrum');
+
+let sourceBuf = null;
+let previewAudioCtx = null;
+let previewSrc = null;
+let specAnimID = null;
+let previewAnalyser = null;
+
+// ---- Preset ----
+function applyPreset(name) {
+  const vals = PRESET_VALUES[name];
+  if (!vals) return;
+  Object.entries(vals).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.type === 'checkbox') el.checked = Boolean(val);
+    else el.value = String(val);
+  });
+  updateWarnings();
+}
+qualityPreset.addEventListener('change', () => applyPreset(qualityPreset.value));
+applyPreset(qualityPreset.value);
+
+// ---- Warnings ----
+function updateWarnings() {
+  const wb = document.getElementById('warning-box');
+  const isSuperRes  = document.getElementById('opt-super-res').checked;
+  const isPunchy    = document.getElementById('opt-punchy-bass').checked;
+  const isBril      = document.getElementById('opt-brilliance').checked;
+  const isLimiter   = document.getElementById('opt-limiter').checked;
+  const isStereo    = document.getElementById('opt-stereo').checked;
+  const valSR       = parseInt(document.getElementById('val-super-res').value);
+  const valPunchy   = parseInt(document.getElementById('val-punchy-bass').value);
+  const valBril     = parseInt(document.getElementById('val-brilliance').value);
+  const valLim      = parseInt(document.getElementById('val-limiter').value);
+  const valStereo   = parseInt(document.getElementById('val-stereo').value);
+
+  let load = 0;
+  if (isLimiter)   load += valLim   * 0.5;
+  if (isBril)      load += valBril  * 0.25;
+  if (isSuperRes)  load += valSR    * 0.25;
+  if (isPunchy)    load += valPunchy* 0.2;
+
+  const warns = [];
+  wb.className = 'warning-box';
+  if (load > 95)       { warns.push('🚨 경고: 마스터링 압력이 매우 높습니다.'); wb.classList.add('danger'); }
+  else if (load > 70)  warns.push('⚠️ 주의: 효과 강도가 높아 과처리될 수 있습니다.');
+  if (isBril && valBril > 75) warns.push('💡 Brilliance가 너무 높으면 고역이 거칠 수 있습니다.');
+  if (isStereo && valStereo > 85) warns.push('🔊 Stereo 확장이 너무 높으면 위상 문제가 날 수 있습니다.');
+
+  if (warns.length) { wb.innerHTML = warns.join('<br><br>'); wb.style.display = 'block'; }
+  else              { wb.style.display = 'none'; wb.innerHTML = ''; }
+}
+document.querySelectorAll('.options-grid input').forEach(el => {
+  el.addEventListener('input', updateWarnings);
+  el.addEventListener('change', updateWarnings);
+});
+
+// ---- File handling ----
+dropZone.addEventListener('click', e => { if (e.target !== fileInput) fileInput.click(); });
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('dragover');
+  if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; handleFileChange(); }
+});
+fileInput.addEventListener('change', handleFileChange);
+
+async function handleFileChange() {
+  const file = fileInput.files[0];
+  if (!file) { submitBtn.disabled = true; return; }
+  fileNameDisp.textContent = file.name;
+  submitBtn.disabled = false;
+  origPlayer.src = URL.createObjectURL(file);
+  resultArea.style.display = 'none';
+  feedbackStat.textContent = '';
+  analysisFeedback.innerHTML = '';
+
+  // Decode for preview spectrum
+  const ab = await file.arrayBuffer();
+  if (!previewAudioCtx) previewAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  try {
+    sourceBuf = await previewAudioCtx.decodeAudioData(ab.slice(0));
+    specWrap.classList.add('show');
+    startPreviewSpectrum();
+  } catch(e) { console.warn('Preview decode error', e); }
+}
+
+// ---- Spectrum preview ----
+function startPreviewSpectrum() {
+  cancelAnimationFrame(specAnimID);
+  if (previewSrc) { try { previewSrc.disconnect(); } catch(e){} previewSrc = null; }
+
+  const ac = previewAudioCtx;
+  if (!sourceBuf) return;
+
+  previewAnalyser = ac.createAnalyser();
+  previewAnalyser.fftSize = 1024;
+  previewSrc = ac.createBufferSource();
+  previewSrc.buffer = sourceBuf;
+  previewSrc.loop = true;
+  previewSrc.connect(previewAnalyser);
+  // Don't connect to destination — silent spectrum only
+  previewSrc.start();
+
+  const data = new Uint8Array(previewAnalyser.frequencyBinCount);
+  const c = specCanvas.getContext('2d');
+  const W = specCanvas.width, H = specCanvas.height;
+
+  function frame() {
+    previewAnalyser.getByteFrequencyData(data);
+    c.clearRect(0, 0, W, H);
+    for (let i = 0; i < data.length; i++) {
+      const v = data[i] / 255;
+      const x = (i / data.length) * W;
+      const bw = W / data.length + 0.5;
+      const bh = v * H;
+      const hue = 220 + v * 60;
+      c.fillStyle = `hsla(${hue},70%,${40+v*30}%,${0.5+v*0.5})`;
+      c.fillRect(x, H - bh, bw, bh);
+    }
+    specAnimID = requestAnimationFrame(frame);
+  }
+  specAnimID = requestAnimationFrame(frame);
+}
+
+// ============================================================
+// OFFLINE DSP ENGINE
+// ============================================================
+
+// Tube-style soft clipper curve
+function makeSoftCurve(drive) {
+  const n = 2048;
+  const curve = new Float32Array(n);
+  const d = 1 + drive * 2;
+  for (let i = 0; i < n; i++) {
+    const x = (i * 2 / (n-1)) - 1;
+    curve[i] = Math.tanh(x * d) / Math.tanh(d);
+  }
+  return curve;
+}
+
+// Exciter curve (harmonic generation)
+function makeExciterCurve(drive) {
+  const n = 1024;
+  const curve = new Float32Array(n);
+  const d = 1 + drive * 0.06;
+  for (let i = 0; i < n; i++) {
+    const x = (i * 2 / n) - 1;
+    curve[i] = Math.tanh(x * d * 3);
+  }
+  return curve;
+}
+
+// FFT-based harmonic synthesis (Super Resolution)
+async function applyHDRestoration(buffer, hfStrength, onProgress) {
+  const ch    = buffer.numberOfChannels;
+  const N     = 4096;
+  const half  = N >> 1;
+  const hop   = N >> 2;
+
+  const win = new Float32Array(N);
+  for (let i = 0; i < N; i++) win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / N);
+
+  function fft(re, im) {
+    const n = re.length;
+    for (let i=1,j=0; i<n; i++) {
+      let bit = n >> 1;
+      for (; j&bit; bit>>=1) j^=bit;
+      j^=bit;
+      if (i<j) { [re[i],re[j]]=[re[j],re[i]]; [im[i],im[j]]=[im[j],im[i]]; }
+    }
+    for (let len=2; len<=n; len<<=1) {
+      const ang = -2*Math.PI/len, wR=Math.cos(ang), wI=Math.sin(ang);
+      for (let i=0; i<n; i+=len) {
+        let cR=1, cI=0;
+        for (let j=0; j<len>>1; j++) {
+          const uR=re[i+j], uI=im[i+j];
+          const vR=re[i+j+len/2]*cR - im[i+j+len/2]*cI;
+          const vI=re[i+j+len/2]*cI + im[i+j+len/2]*cR;
+          re[i+j]=uR+vR; im[i+j]=uI+vI;
+          re[i+j+len/2]=uR-vR; im[i+j+len/2]=uI-vI;
+          const nR=cR*wR-cI*wI; cI=cR*wI+cI*wR; cR=nR;
+        }
+      }
+    }
+  }
+  function ifft(re, im) {
+    for (let i=0; i<re.length; i++) im[i]=-im[i];
+    fft(re, im);
+    for (let i=0; i<re.length; i++) { re[i]/=re.length; im[i]=-im[i]/re.length; }
+  }
+
+  const harmonics = [2, 4, 8, 16];
+  const levels    = [0.5, 0.25, 0.125, 0.0625];
+  const lvlScale  = 0.3 + hfStrength * 0.7;
+  const binHz     = buffer.sampleRate / N;
+
+  for (let c=0; c<ch; c++) {
+    const data = buffer.getChannelData(c);
+    const len  = data.length;
+    const out  = new Float32Array(len);
+    const norm = new Float32Array(len);
+    const re   = new Float32Array(N);
+    const im   = new Float32Array(N);
+
+    // Detect cutoff frequency
+    let cutBin = Math.round(half * 0.8);
+    {
+      const avgMag = new Float32Array(half+1);
+      let cnt = 0;
+      const scanHop = Math.max(hop*8, Math.floor(len/20));
+      const tR = new Float32Array(N), tI = new Float32Array(N);
+      for (let fs=0; fs<len-N; fs+=scanHop) {
+        for (let i=0; i<N; i++) { const idx=fs+i; tR[i]=idx<len?data[idx]*win[i]:0; tI[i]=0; }
+        fft(tR, tI);
+        for (let k=1; k<=half; k++) avgMag[k] += Math.sqrt(tR[k]*tR[k]+tI[k]*tI[k]);
+        cnt++;
+      }
+      for (let k=1; k<=half; k++) avgMag[k] /= Math.max(1,cnt);
+      const refLo=Math.round(1000/binHz), refHi=Math.round(4000/binHz);
+      let refDb=0, refN=0;
+      for (let k=refLo; k<=refHi&&k<=half; k++) { refDb+=20*Math.log10(Math.max(avgMag[k],1e-12)); refN++; }
+      refDb /= Math.max(1,refN);
+      const searchCeil = Math.round(half*0.5);
+      const winB = 8;
+      for (let k=searchCeil-winB; k>=winB; k-=Math.max(1,winB>>1)) {
+        let avg=0; for (let j=0; j<winB; j++) avg+=20*Math.log10(Math.max(avgMag[k+j],1e-12)); avg/=winB;
+        if (avg > refDb-30) { cutBin=k+winB; break; }
+      }
+      cutBin = Math.max(Math.round(half*0.05), Math.min(cutBin, searchCeil));
+    }
+
+    const xfStart = Math.max(1, Math.round(cutBin*0.75));
+    let frameIdx = 0;
+
+    for (let fs=0; fs<len; fs+=hop, frameIdx++) {
+      if (frameIdx%64===0) {
+        if (onProgress) onProgress(c, fs, len);
+        await new Promise(r => setTimeout(r, 0));
+      }
+      for (let i=0; i<N; i++) { const idx=fs+i; re[i]=idx<len?data[idx]*win[i]:0; im[i]=0; }
+      fft(re, im);
+
+      const oRe=new Float32Array(N), oIm=new Float32Array(N);
+      for (let k=0; k<N; k++) { oRe[k]=re[k]; oIm[k]=im[k]; }
+      const oMag=new Float32Array(half+1);
+      for (let k=1; k<=half; k++) oMag[k]=Math.sqrt(oRe[k]*oRe[k]+oIm[k]*oIm[k]);
+
+      re.fill(0); im.fill(0);
+      for (let k=1; k<xfStart; k++) { re[k]=oRe[k]; im[k]=oIm[k]; }
+      for (let k=xfStart; k<=cutBin&&k<=half; k++) {
+        const t=(k-xfStart)/Math.max(1,cutBin-xfStart);
+        const wO=0.5+0.5*Math.cos(Math.PI*t);
+        re[k]+=oRe[k]*wO; im[k]+=oIm[k]*wO;
+      }
+      for (let oi=0; oi<harmonics.length; oi++) {
+        const order=harmonics[oi], lev=levels[oi]*lvlScale;
+        const cLo=cutBin*(order/2), cHi=Math.min(half,cutBin*order);
+        if (cLo>half) break;
+        const jLo=Math.max(1,Math.ceil(cLo/order)), jHi=Math.min(half,Math.floor(cHi/order));
+        for (let j=jLo; j<=jHi; j++) {
+          const dk=j*order; if (dk<1||dk>half) continue;
+          const m=oMag[j]*lev, p=Math.atan2(oIm[j],oRe[j]);
+          re[dk]+=m*Math.cos(p); im[dk]+=m*Math.sin(p);
+        }
+      }
+      for (let k=1; k<half; k++) { re[N-k]=re[k]; im[N-k]=-im[k]; }
+      ifft(re, im);
+      for (let i=0; i<N; i++) {
+        const idx=fs+i;
+        if (idx<len) { out[idx]+=re[i]*win[i]; norm[idx]+=win[i]*win[i]; }
+      }
+    }
+    for (let i=0; i<len; i++) { if (norm[i]>0.01) data[i]=out[i]/norm[i]; }
+  }
+  // Peak limit
+  for (let c=0; c<ch; c++) {
+    const d=buffer.getChannelData(c);
+    for (let i=0; i<d.length; i++) if (Math.abs(d[i])>0.99) d[i]=Math.sign(d[i])*0.99;
+  }
+}
+
+// ---- Build & render DSP chain (OfflineAudioContext) ----
+async function renderDSP(inputBuf, params) {
+  const sr  = inputBuf.sampleRate;
+  const ch  = inputBuf.numberOfChannels;
+  const len = inputBuf.length;
+  const ac  = new OfflineAudioContext(ch, len, sr);
+
+  const src = ac.createBufferSource();
+  src.buffer = inputBuf;
+  let chain = src;
+
+  // 1. High-pass filter (noise floor / rumble)
+  if (params.highpass) {
+    const hpf = ac.createBiquadFilter();
+    hpf.type = 'highpass';
+    hpf.frequency.value = params.valHighpass;
+    hpf.Q.value = 0.5;
+    chain.connect(hpf);
+    chain = hpf;
+  }
+
+  // 2. Noise reduction — multiband gating via LPF + dynamic threshold
+  if (params.noiseReduction) {
+    const nr = ac.createDynamicsCompressor();
+    nr.threshold.value = -70 + params.valNoiseReduction * 0.4; // -70 ~ -30dB
+    nr.ratio.value     = 3;
+    nr.attack.value    = 0.05;
+    nr.release.value   = 0.3;
+    nr.knee.value      = 20;
+    chain.connect(nr);
+    chain = nr;
+  }
+
+  // 3. Punchy bass — low-shelf boost + soft clipper on bass band
+  if (params.punchyBass) {
+    const dryGain  = ac.createGain(); dryGain.gain.value = 1.0;
+    const bassHPF  = ac.createBiquadFilter(); bassHPF.type='highpass'; bassHPF.frequency.value=30;
+    const bassLPF  = ac.createBiquadFilter(); bassLPF.type='lowpass';  bassLPF.frequency.value=200;
+    const bassComp = ac.createDynamicsCompressor();
+    bassComp.threshold.value = -20 - params.valPunchyBass*0.15;
+    bassComp.ratio.value     = 3 + params.valPunchyBass*0.05;
+    bassComp.attack.value    = 0.005;
+    bassComp.release.value   = 0.08;
+    bassComp.knee.value      = 8;
+    const bassShaper = ac.createWaveShaper();
+    bassShaper.curve = makeSoftCurve(params.valPunchyBass/100 * 0.4);
+    bassShaper.oversample = '2x';
+    const bassBoost  = ac.createBiquadFilter(); bassBoost.type='lowShelf'; bassBoost.frequency.value=120; bassBoost.gain.value=params.valPunchyBass*0.06;
+    const bassGain   = ac.createGain(); bassGain.gain.value = params.valPunchyBass/100*0.5;
+    const mixOut     = ac.createGain();
+    chain.connect(dryGain);   dryGain.connect(mixOut);
+    chain.connect(bassHPF);   bassHPF.connect(bassLPF); bassLPF.connect(bassComp);
+    bassComp.connect(bassShaper); bassShaper.connect(bassBoost); bassBoost.connect(bassGain); bassGain.connect(mixOut);
+    chain = mixOut;
+  }
+
+  // 4. Brilliance — harmonic exciter on high frequencies
+  if (params.brilliance) {
+    const dryG  = ac.createGain(); dryG.gain.value = 1.0;
+    const hpf   = ac.createBiquadFilter(); hpf.type='highpass'; hpf.frequency.value=4000+params.valBrilliance*40;
+    const shaper= ac.createWaveShaper(); shaper.curve=makeExciterCurve(params.valBrilliance/100); shaper.oversample='2x';
+    const bpf   = ac.createBiquadFilter(); bpf.type='bandpass'; bpf.frequency.value=6000+params.valBrilliance*50; bpf.Q.value=0.8;
+    const wetG  = ac.createGain(); wetG.gain.value = params.valBrilliance/100 * 0.45;
+    const mixG  = ac.createGain();
+    chain.connect(dryG);  dryG.connect(mixG);
+    chain.connect(hpf);   hpf.connect(shaper); shaper.connect(bpf); bpf.connect(wetG); wetG.connect(mixG);
+    chain = mixG;
+  }
+
+  // 5. Stereo widener (M/S processing)
+  if (params.stereoWidener && ch === 2) {
+    const width = 1.0 + params.valStereo/100 * 0.8; // 1.0~1.8
+    const splitter = ac.createChannelSplitter(2);
+    const merger   = ac.createChannelMerger(2);
+    const midGain  = ac.createGain(); midGain.gain.value  = 1.0;
+    const sideGain = ac.createGain(); sideGain.gain.value = width;
+    // L = (M + S), R = (M - S)  ← simplified stereo expand
+    chain.connect(splitter);
+    splitter.connect(midGain,  0);
+    splitter.connect(sideGain, 1);
+    midGain.connect(merger,  0, 0);
+    sideGain.connect(merger, 0, 1);
+    chain = merger;
+  }
+
+  // 6. Limiter / Loudness maximizer
+  if (params.limiter) {
+    const makeup   = ac.createGain();
+    makeup.gain.value = 1 + params.valLimiter/100*0.8;
+    const limiter  = ac.createDynamicsCompressor();
+    limiter.threshold.value = -6 - (100-params.valLimiter)*0.1;
+    limiter.ratio.value     = 20;
+    limiter.attack.value    = 0.001;
+    limiter.release.value   = 0.05;
+    limiter.knee.value      = 0;
+    chain.connect(makeup); makeup.connect(limiter);
+    chain = limiter;
+  }
+
+  chain.connect(ac.destination);
+  src.start(0);
+  return await ac.startRendering();
+}
+
+// ---- Compute audio metrics ----
+function computeMetrics(buffer) {
+  const data = buffer.getChannelData(0);
+  let sumSq=0, peak=0;
+  for (let i=0; i<data.length; i++) {
+    sumSq += data[i]*data[i];
+    if (Math.abs(data[i])>peak) peak=Math.abs(data[i]);
+  }
+  const rms   = Math.sqrt(sumSq/data.length);
+  const crest = rms > 0 ? peak/rms : 0;
+  return { rms, crest, peak };
+}
+
+// ---- WAV encoder ----
+function encodeWAV(buffer) {
+  const ch=buffer.numberOfChannels, sr=buffer.sampleRate, len=buffer.length;
+  const dataSize = len*ch*2;
+  const ab = new ArrayBuffer(44+dataSize);
+  const v  = new DataView(ab);
+  const ws = (o,s) => { for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
+  ws(0,'RIFF'); v.setUint32(4,36+dataSize,true); ws(8,'WAVE');
+  ws(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true);
+  v.setUint16(22,ch,true); v.setUint32(24,sr,true);
+  v.setUint32(28,sr*ch*2,true); v.setUint16(32,ch*2,true); v.setUint16(34,16,true);
+  ws(36,'data'); v.setUint32(40,dataSize,true);
+  let off=44;
+  for (let i=0; i<len; i++) {
+    for (let c=0; c<ch; c++) {
+      const s=Math.max(-1,Math.min(1,buffer.getChannelData(c)[i]));
+      v.setInt16(off, Math.round(s*32767), true); off+=2;
+    }
+  }
+  return ab;
+}
+
+// ---- Main submit ----
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!sourceBuf) return;
+
+  // Stop preview spectrum
+  cancelAnimationFrame(specAnimID); specAnimID=null;
+  if (previewSrc) { try { previewSrc.stop(); previewSrc.disconnect(); } catch(er){} previewSrc=null; }
+
+  submitBtn.disabled=true;
+  loader.style.display='block';
+  resultArea.style.display='none';
+  progressFill.style.width='0%';
+
+  const t0 = performance.now();
+
+  const params = {
+    highpass:      document.getElementById('opt-highpass').checked,
+    valHighpass:   parseFloat(document.getElementById('val-highpass').value),
+    noiseReduction:document.getElementById('opt-noise-reduction').checked,
+    valNoiseReduction:parseFloat(document.getElementById('val-noise-reduction').value),
+    punchyBass:    document.getElementById('opt-punchy-bass').checked,
+    valPunchyBass: parseFloat(document.getElementById('val-punchy-bass').value),
+    brilliance:    document.getElementById('opt-brilliance').checked,
+    valBrilliance: parseFloat(document.getElementById('val-brilliance').value),
+    stereoWidener: document.getElementById('opt-stereo').checked,
+    valStereo:     parseFloat(document.getElementById('val-stereo').value),
+    limiter:       document.getElementById('opt-limiter').checked,
+    valLimiter:    parseFloat(document.getElementById('val-limiter').value),
+    superRes:      document.getElementById('opt-super-res').checked,
+    valSuperRes:   parseFloat(document.getElementById('val-super-res').value)/100,
+  };
+
+  try {
+    // Step 1: DSP chain
+    statusText.textContent = '🎛️ DSP 체인 처리 중...';
+    progressFill.style.width='20%';
+    await new Promise(r => setTimeout(r, 30));
+
+    let rendered = await renderDSP(sourceBuf, params);
+    progressFill.style.width='50%';
+
+    // Step 2: Super Resolution (FFT harmonic synthesis)
+    if (params.superRes && params.valSuperRes > 0) {
+      statusText.textContent = '🔬 고해상도 복원 중...';
+      const totalCh = rendered.numberOfChannels;
+      await applyHDRestoration(rendered, params.valSuperRes, (chIdx, fs, len) => {
+        const pct = 50 + ((chIdx + fs/len)/totalCh)*40;
+        progressFill.style.width = Math.round(pct)+'%';
+        statusText.textContent = `🔬 고해상도 복원 중... ${Math.round((chIdx+fs/len)/totalCh*100)}%`;
+      });
+    }
+    progressFill.style.width='95%';
+
+    // Step 3: encode & make blob
+    statusText.textContent = '💾 WAV 인코딩 중...';
+    await new Promise(r => setTimeout(r, 30));
+    const wavData = encodeWAV(rendered);
+    const blob    = new Blob([wavData], { type: 'audio/wav' });
+    const url     = URL.createObjectURL(blob);
+
+    progressFill.style.width='100%';
+    loader.style.display='none';
+    resultArea.style.display='block';
+
+    // Players
+    restPlayer.src = url;
+    const origName = fileInput.files[0]?.name.replace(/\.[^.]+$/,'') || 'output';
+    downloadLink.href = url;
+    downloadLink.download = origName + '_restored.wav';
+
+    // Metrics
+    const m = computeMetrics(rendered);
+    const elapsed = ((performance.now()-t0)/1000).toFixed(1);
+    const rmsDb   = m.rms > 0 ? (20*Math.log10(m.rms)).toFixed(1) : '--';
+    const rmsEl   = document.getElementById('metric-rms');
+    const crestEl = document.getElementById('metric-crest');
+    rmsEl.textContent = rmsDb + ' dB';
+    rmsEl.className   = 'value ' + (m.rms>0.3?'warning':m.rms>0.05?'good':'');
+    crestEl.textContent = m.crest.toFixed(1) + 'x';
+    crestEl.className   = 'value ' + (m.crest>12?'good':m.crest>6?'':'warning');
+    document.getElementById('metric-time').textContent = elapsed + 'sec';
+    const effectLabels = [];
+    if (params.highpass)       effectLabels.push('Low Cut');
+    if (params.noiseReduction) effectLabels.push('NR');
+    if (params.punchyBass)     effectLabels.push('Bass');
+    if (params.brilliance)     effectLabels.push('Brilliance');
+    if (params.stereoWidener)  effectLabels.push('Stereo');
+    if (params.limiter)        effectLabels.push('Limiter');
+    if (params.superRes)       effectLabels.push('SuperRes');
+    document.getElementById('metric-effects').textContent = effectLabels.join(' · ') || 'None';
+
+    // Feedback
+    analysisFeedback.innerHTML =
+      '✅ 처리 완료. 아래에서 원본과 복원본을 비교해보세요.<br>' +
+      `📁 파일: ${fileInput.files[0]?.name}<br>` +
+      `🔊 샘플레이트: ${(rendered.sampleRate/1000).toFixed(1)}kHz · ${rendered.numberOfChannels}ch`;
+
+    document.getElementById('plan-source-badge').textContent = '⚡ 처리 완료 — 브라우저 Web Audio API';
+    document.getElementById('plan-source-badge').classList.add('active');
+
+  } catch(err) {
+    loader.style.display='none';
+    alert('처리 오류: ' + err.message);
+    console.error(err);
+  } finally {
+    submitBtn.disabled=false;
+  }
+});
+
+// ---- Feedback buttons (local only) ----
+document.querySelectorAll('.feedback-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const fb = btn.getAttribute('data-feedback');
+    feedbackStat.textContent = fb==='good'?'👍 좋다고 기록했어요!':fb==='neutral'?'😐 보통으로 기록했어요.':'👎 별로라고 기록했어요.';
+  });
+});
+</script>
+</body>
+</html>
