@@ -20,21 +20,21 @@
         body { background: var(--bg); color: var(--text); font-family: 'DM Sans', 'Inter', sans-serif; min-height: 100vh; padding: 32px 16px 64px; }
         .container { position: relative; z-index: 1; width: 100%; max-width: 640px; margin: 0 auto; }
         .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
-        h1.title { font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, #fff 40%, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.02em; }
-        .badge { font-size: 0.7rem; padding: 3px 10px; background: rgba(16,185,129,0.15); color: var(--accent); border: 1px solid rgba(16,185,129,0.3); border-radius: 6px; vertical-align: middle; margin-left: 12px; font-weight: 700; }
+        h1.title { font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, #fff 40%, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 0.02em; }
+        .badge { font-size: 0.7rem; padding: 3px 10px; background: rgba(16,185,129,0.15); color: var(--accent); border: 1px solid rgba(16,185,129,0.3); border-radius: 6px; vertical-align: middle; font-weight: 800; }
         
-        .upload-area { background: var(--surface2); border: 1.5px dashed rgba(16,185,129,0.25); border-radius: var(--radius); padding: 42px 24px; text-align: center; cursor: pointer; transition: 0.2s; margin-bottom: 20px; }
+        .upload-area { background: var(--surface2); border: 1.5px dashed rgba(16,185,129,0.25); border-radius: var(--radius); padding: 42px 24px; text-align: center; cursor: pointer; transition: 0.3s; }
         .upload-area:hover { border-color: var(--accent); background: rgba(16,185,129,0.05); }
         .upload-area .icon { font-size: 2.2rem; margin-bottom: 12px; }
         #file-name-display { font-size: 0.92rem; color: var(--text-muted); font-weight: 500; }
         #audio-file { display: none; }
         
         .preset-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-        #quality-preset { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); padding: 10px 14px; font-size: 0.9rem; outline: none; transition: 0.2s; cursor: pointer; }
+        #quality-preset { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); padding: 10px 14px; font-size: 0.9rem; outline: none; transition: 0.2s; }
         #quality-preset:hover { border-color: rgba(255,255,255,0.15); }
         
         .options-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
-        .toggle-container { display: flex; align-items: center; justify-content: flex-start; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; gap: 14px; position: relative; transition: 0.3s; user-select: none; }
+        .toggle-container { display: flex; align-items: center; justify-content: flex-start; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; transition: 0.2s; position: relative; }
         .toggle-container.warning-bg { background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.3); }
         .toggle-container.danger-bg { background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.4); }
         .toggle-container.dragging { opacity: 0.3; }
@@ -53,16 +53,16 @@
         .switch input:checked + .slider::before { transform: translateX(17px); background: var(--accent); }
         
         input[type="range"] { -webkit-appearance: none; width: 85px; height: 4px; background: var(--surface); border-radius: 4px; transition: 0.2s; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid var(--bg); transition: 0.2s; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid var(--bg); box-shadow: 0 2px 8px rgba(16,185,129,0.4); }
         input[type="range"].warn-slider::-webkit-slider-thumb { background: var(--warning); }
         input[type="range"].danger-slider::-webkit-slider-thumb { background: var(--danger); }
 
-        .primary-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; font-size: 1rem; font-weight: 700; border: none; border-radius: var(--radius-sm); cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(16,185,129,0.2); }
+        .primary-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; font-size: 1rem; font-weight: 700; border: none; border-radius: var(--radius-sm); cursor: pointer; transition: 0.2s; box-shadow: 0 4px 16px rgba(16,185,129,0.3); }
         .primary-btn:active { transform: scale(0.98); }
         .primary-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
         
         .loader-container { display: none; text-align: center; padding: 48px 0; }
-        .loader { width: 40px; height: 40px; border: 3.5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.85s cubic-bezier(0.4, 0, 0.2, 1) infinite; margin: 0 auto 16px; }
+        .loader { width: 40px; height: 40px; border: 3.5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.85s cubic-bezier(0.4, 0, 0.2, 1) infinite; margin: 0 auto 20px; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
         .result-area { display: none; margin-top: 32px; width: 100%; }
@@ -71,13 +71,13 @@
         .metric .value { font-family: 'DM Mono', monospace; color: var(--accent); font-weight: 600; }
         
         .visualization-container { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; width: 100%; }
-        .wf-label { display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.03em; }
+        .wf-label { display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
         #waveform-original, #waveform-restored { background: rgba(0,0,0,0.25); border-radius: 8px; height: 72px; cursor: pointer; margin-bottom: 14px; }
         .audio-player { width: 100%; accent-color: var(--accent); height: 40px; filter: invert(0.9) hue-rotate(90deg) contrast(0.9); margin-top: 8px; display: block; opacity: 0.9; }
         
         .master-controls { display: flex; align-items: center; justify-content: center; gap: 28px; margin: 32px 0; background: var(--surface2); padding: 26px; border-radius: var(--radius); border: 1px solid var(--border); }
         .time-display { font-family: 'DM Mono', monospace; font-size: 0.95rem; color: var(--text-muted); min-width: 50px; text-align: center; }
-        .master-play-btn { width: 64px; height: 64px; border-radius: 50%; background: var(--accent); border: none; color: white; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(16,185,129,0.35); transition: 0.2s; }
+        .master-play-btn { width: 64px; height: 64px; border-radius: 50%; background: var(--accent); border: none; color: white; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; box-shadow: 0 4px 16px rgba(16,185,129,0.3); }
         .master-play-btn:hover { transform: scale(1.05); background: #10cf90; }
         .ab-toggle-btn { background: #1e293b; border: 1px solid #334155; border-radius: 50px; padding: 10px 20px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; }
         .ab-toggle-btn:hover { border-color: #475569; background: #253145; }
@@ -87,7 +87,7 @@
         .mode-label { font-size: 0.8rem; color: #64748b; font-weight: 800; letter-spacing: 0.05em; transition: 0.2s; }
         .mode-label.active { color: white; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
         
-        .download-btn { display: block; text-align: center; padding: 16px; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: var(--radius-sm); color: var(--accent); text-decoration: none; font-weight: 700; margin-bottom: 10px; transition: 0.2s; }
+        .download-btn { display: block; text-align: center; padding: 16px; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: var(--radius-sm); color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: 0.2s; }
         .download-btn:hover { background: rgba(16,185,129,0.14); border-color: var(--accent); }
         .batch-list { list-style: none; margin-top: 14px; border-top: 1px solid var(--border); padding-top: 14px; }
         .batch-item { padding: 12px 16px; border-radius: 10px; cursor: pointer; font-size: 0.88rem; color: var(--text-muted); display: flex; justify-content: space-between; transition: 0.2s; }
@@ -97,14 +97,14 @@
         .ai-rec-box { background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.2); border-radius: 14px; padding: 18px; margin-top: 20px; }
         .ai-rec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 12px; }
         .ai-rec-title { font-weight: 800; color: var(--accent); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; }
-        .apply-ai-btn { background: #334155; color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); padding: 10px 18px; border-radius: 10px; font-size: 0.8rem; font-weight: 800; cursor: not-allowed; transition: 0.2s; }
+        .apply-ai-btn { background: #334155; color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); padding: 10px 18px; border-radius: 10px; font-size: 0.8rem; font-weight: 800; cursor: not-allowed; }
         .apply-ai-btn.ready { background: var(--accent); color: white; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(16,185,129,0.35); }
         .apply-ai-btn.ready:hover { background: #10cf90; transform: translateY(-2px); }
         #ai-rec-list { font-size: 0.85rem; color: var(--text); line-height: 1.6; }
         .offline-badge { font-size: 0.65rem; color: var(--text-muted); border: 1px solid var(--border); padding: 3px 8px; border-radius: 6px; margin-left: 14px; font-weight: 700; text-transform: uppercase; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
-        .modal-content { background: var(--surface2); border-radius: var(--radius); padding: 28px; width: 100%; max-width: 420px; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
-        #groq-api-key { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; color: white; font-family: 'DM Mono', monospace; margin: 16px 0 24px; outline: none; }
+        .modal-content { background: var(--surface2); border-radius: var(--radius); padding: 28px; width: 100%; max-width: 420px; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        #groq-api-key { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; color: white; font-family: 'DM Mono', monospace; margin: 16px 0; }
     </style>
 </head>
 <body>
@@ -112,7 +112,7 @@
         <header class="header">
             <div class="header-flex">
                 <div>
-                    <h1 class="title">Analog Soul Engine <span class="badge">V4 FINAL</span></h1>
+                    <h1 class="title">Analog Soul Engine <span class="badge">V4 ENHANCED</span></h1>
                 </div>
                 <button type="button" id="settings-btn" style="background:none; border:none; cursor:pointer; font-size:1.5rem; opacity:0.6; transition:0.2s;">⚙️</button>
             </div>
@@ -137,13 +137,13 @@
             </div>
 
             <div class="options-grid" id="dsp-chain">
-                <div class="toggle-container" draggable="true" data-module="highpass"><span class="drag-handle">☰</span><span>저역 제거 (Low Cut)</span><div class="control-group"><label class="switch"><input type="checkbox" id="opt-highpass" checked><span class="slider round"></span></label><input type="range" id="val-highpass" min="20" max="200" value="80"></div></div>
-                <div class="toggle-container" draggable="true" data-module="multiband"><span class="drag-handle">☰</span><span>멀티밴드 글루 (Multiband Glue)<span class="warn-tag">⚠️ 왜곡 주의</span></span><div class="control-group"><label class="switch"><input type="checkbox" id="opt-multiband" checked><span class="slider round"></span></label><input type="range" id="val-multiband" min="0" max="100" value="55"></div></div>
-                <div class="toggle-container" draggable="true" data-module="punchy_bass"><span class="drag-handle">☰</span><span>저음 강화 (Punchy Bass)<span class="warn-tag">⚠️ 왜곡 주의</span></span><div class="control-group"><label class="switch"><input type="checkbox" id="opt-punchy-bass" checked><span class="slider round"></span></label><input type="range" id="val-punchy-bass" min="0" max="100" value="30"></div></div>
-                <div class="toggle-container" draggable="true" data-module="super_res"><span class="drag-handle">☰</span><span>고주파 복원 (Super Resolution)<span class="warn-tag">⚠️ 왜곡 주의</span></span><div class="control-group"><label class="switch"><input type="checkbox" id="opt-super-res" checked><span class="slider round"></span></label><input type="range" id="val-super-res" min="0" max="100" value="60"></div></div>
-                <div class="toggle-container" draggable="true" data-module="brilliance"><span class="drag-handle">☰</span><span>배음 강화 (Brilliance)<span class="warn-tag">⚠️ 왜곡 주의</span></span><div class="control-group"><label class="switch"><input type="checkbox" id="opt-brilliance" checked><span class="slider round"></span></label><input type="range" id="val-brilliance" min="0" max="100" value="40"></div></div>
-                <div class="toggle-container" draggable="true" data-module="stereo"><span class="drag-handle">☰</span><span>공간 확장 (Stereo Widener)<span class="warn-tag">⚠️ 왜곡 주의</span></span><div class="control-group"><label class="switch"><input type="checkbox" id="opt-stereo" checked><span class="slider round"></span></label><input type="range" id="val-stereo" min="0" max="100" value="35"></div></div>
-                <div class="toggle-container" draggable="true" data-module="limiter"><span class="drag-handle">☰</span><span>최종 출력 (Limiter)<span class="warn-tag">⚠️ 왜곡 주의</span></span><div class="control-group"><label class="switch"><input type="checkbox" id="opt-limiter" checked><span class="slider round"></span></label><input type="range" id="val-limiter" min="0" max="100" value="80"></div></div>
+                <div class="toggle-container" draggable="true" data-module="highpass"><span class="drag-handle">☰</span><span>저역 제거 (Low Cut)</span><div class="control-group"><label class="switch"><input type="checkbox" id="opt-highpass" checked><span class="slider round"></span></label><input type="range" id="val-highpass" value="75"></div></div>
+                <div class="toggle-container" draggable="true" data-module="multiband"><span class="drag-handle">☰</span><span>멀티밴드 글루 (Multiband Glue)<span class="warn-tag">⚠️ 왜곡 주의</span></span><div class="control-group"><label class="switch"><input type="checkbox" id="opt-multiband" checked><span class="slider round"></span></label><input type="range" id="val-multiband" value="55"></div></div>
+                <div class="toggle-container" draggable="true" data-module="punchy_bass"><span class="drag-handle">☰</span><span>저음 강화 (Punchy Bass)<span class="warn-tag">⚠️ 왜곡 주의</span></span><div class="control-group"><label class="switch"><input type="checkbox" id="opt-punchy-bass" checked><span class="slider round"></span></label><input type="range" id="val-punchy-bass" value="30"></div></div>
+                <div class="toggle-container" draggable="true" data-module="super_res"><span class="drag-handle">☰</span><span>고주파 복원 (Super Resolution)<span class="warn-tag">⚠️ 왜곡 주의</span></span><div class="control-group"><label class="switch"><input type="checkbox" id="opt-super-res" checked><span class="slider round"></span></label><input type="range" id="val-super-res" value="50"></div></div>
+                <div class="toggle-container" draggable="true" data-module="brilliance"><span class="drag-handle">☰</span><span>배음 강화 (Brilliance)<span class="warn-tag">⚠️ 왜곡 주의</span></span><div class="control-group"><label class="switch"><input type="checkbox" id="opt-brilliance" checked><span class="slider round"></span></label><input type="range" id="val-brilliance" value="45"></div></div>
+                <div class="toggle-container" draggable="true" data-module="stereo"><span class="drag-handle">☰</span><span>공간 확장 (Stereo Widener)<span class="warn-tag">⚠️ 왜곡 주의</span></span><div class="control-group"><label class="switch"><input type="checkbox" id="opt-stereo" checked><span class="slider round"></span></label><input type="range" id="val-stereo" value="60"></div></div>
+                <div class="toggle-container" draggable="true" data-module="limiter"><span class="drag-handle">☰</span><span>최종 출력 (Limiter)<span class="warn-tag">⚠️ 왜곡 주의</span></span><div class="control-group"><label class="switch"><input type="checkbox" id="opt-limiter" checked><span class="slider round"></span></label><input type="range" id="val-limiter" value="50"></div></div>
                 <div class="toggle-container" style="cursor:default;" data-module="match_volume"><span style="width:34px;"></span><span>원본 볼륨 맞춤 (Match Volume)</span><div class="control-group"><label class="switch"><input type="checkbox" id="opt-match-volume" checked><span class="slider round"></span></label></div></div>
             </div>
             
@@ -198,15 +198,15 @@
             </div>
 
             <a href="#" id="download-link" class="download-btn">📥 DOWNLOAD WAV</a>
-            <button id="zip-download-btn" class="download-btn" style="width:100%; background:rgba(79,140,255,0.08); border-color:rgba(79,140,255,0.2); color:var(--accent2); display:none; margin-top:8px;">📦 EXPORT ALL AS ZIP</button>
+            <button id="zip-download-btn" class="download-btn" style="width:100%; background:rgba(79,140,255,0.08); border-color:rgba(79,140,255,0.2); color:var(--accent2); display:none; margin-top:12px;">📦 BATCH ZIP DOWNLOAD</button>
         </div>
     </div>
 
-    <div id="settings-modal" class="modal"><div class="modal-content"><h2 style="font-size:1.2rem; margin-bottom:8px;">Groq AI Settings</h2><p style="font-size:0.8rem; color:var(--text-muted);">마스터링 조언을 받으려면 API 키를 입력하세요.</p><input type="password" id="groq-api-key" placeholder="Enter API Key..."><div style="display:flex; gap:12px; justify-content:flex-end;"><button id="modal-close" class="primary-btn" style="width:auto; padding:10px 20px; background:#334155; box-shadow:none;">Cancel</button><button id="modal-save" class="primary-btn" style="width:auto; padding:10px 20px;">Save Changes</button></div></div></div>
+    <div id="settings-modal" class="modal"><div class="modal-content"><h2 style="font-size:1.2rem; margin-bottom:8px;">Groq AI Settings</h2><p style="font-size:0.8rem; color:var(--text-muted);">Optional: Enter your Groq API key for AI mastering recommendations</p><input type="password" id="groq-api-key" placeholder="gsk_..."><div style="display:flex; gap:10px; margin-top:16px;"><button type="button" id="modal-close" style="flex:1; padding:10px; background:var(--surface); border:1px solid var(--border); border-radius:10px; color:var(--text); cursor:pointer;">Cancel</button><button type="button" id="modal-save" style="flex:1; padding:10px; background:var(--accent); border:none; border-radius:10px; color:white; cursor:pointer; font-weight:700;">Save</button></div></div></div>
 
     <script>
-        const PRESET_MAP = { music_balanced: { vals: { "opt-highpass": true, "val-highpass": 75, "opt-multiband": true, "val-multiband": 55, "opt-punchy-bass": true, "val-punchy-bass": 30, "opt-super-res": true, "val-super-res": 55, "opt-brilliance": true, "val-brilliance": 40, "opt-stereo": true, "val-stereo": 35, "opt-limiter": true, "val-limiter": 80 }, order: ["highpass", "multiband", "punchy_bass", "super_res", "brilliance", "stereo", "limiter"] }, voice_clean: { vals: { "opt-highpass": true, "val-highpass": 110, "opt-multiband": true, "val-multiband": 40, "opt-punchy-bass": false, "val-punchy-bass": 20, "opt-super-res": true, "val-super-res": 30, "opt-brilliance": true, "val-brilliance": 35, "opt-stereo": false, "val-stereo": 10, "opt-limiter": true, "val-limiter": 55 }, order: ["highpass", "multiband", "brilliance", "super_res", "limiter", "punchy_bass", "stereo"] }, podcast_pro: { vals: { "opt-highpass": true, "val-highpass": 80, "opt-multiband": true, "val-multiband": 75, "opt-punchy-bass": true, "val-punchy-bass": 40, "opt-super-res": true, "val-super-res": 40, "opt-brilliance": true, "val-brilliance": 45, "opt-stereo": false, "val-stereo": 15, "opt-limiter": true, "val-limiter": 75 }, order: ["highpass", "punchy_bass", "multiband", "limiter", "super_res", "brilliance", "stereo"] }, compressed_repair: { vals: { "opt-highpass": true, "val-highpass": 85, "opt-multiband": true, "val-multiband": 65, "opt-punchy-bass": true, "val-punchy-bass": 35, "opt-super-res": true, "val-super-res": 65, "opt-brilliance": true, "val-brilliance": 50, "opt-stereo": true, "val-stereo": 30, "opt-limiter": true, "val-limiter": 60 }, order: ["super_res", "brilliance", "highpass", "multiband", "punchy_bass", "stereo", "limiter"] }, asmr_field: { vals: { "opt-highpass": true, "val-highpass": 35, "opt-multiband": false, "val-multiband": 0, "opt-punchy-bass": false, "val-punchy-bass": 0, "opt-super-res": true, "val-super-res": 45, "opt-brilliance": true, "val-brilliance": 70, "opt-stereo": true, "val-stereo": 75, "opt-limiter": false, "val-limiter": 20 }, order: ["highpass", "brilliance", "super_res", "stereo", "limiter", "multiband", "punchy_bass"] } };
-        const PROFILES = { music_balanced: { sr_mix: 1.0, br_mix: 1.0, st_mul: 1.0, lim_mul: 0.9 }, voice_clean: { sr_mix: 0.8, br_mix: 0.8, st_mul: 0.7, lim_mul: 0.8 }, compressed_repair: { sr_mix: 0.95, br_mix: 0.9, st_mul: 0.8, lim_mul: 0.55 }, podcast_pro: { sr_mix: 0.7, br_mix: 0.9, st_mul: 0.6, lim_mul: 0.85 }, asmr_field: { sr_mix: 1.2, br_mix: 1.1, st_mul: 1.0, lim_mul: 0.7 } };
+        const PRESET_MAP = { music_balanced: { vals: { "opt-highpass": true, "val-highpass": 75, "opt-multiband": true, "val-multiband": 55, "opt-punchy-bass": true, "val-punchy-bass": 30, "opt-super-res": true, "val-super-res": 50, "opt-brilliance": true, "val-brilliance": 45, "opt-stereo": true, "val-stereo": 60, "opt-limiter": true, "val-limiter": 50, "opt-match-volume": true }, order: ["highpass", "multiband", "punchy_bass", "super_res", "brilliance", "stereo", "limiter"] }, voice_clean: { vals: { "opt-highpass": true, "val-highpass": 100, "opt-multiband": true, "val-multiband": 40, "opt-punchy-bass": false, "val-punchy-bass": 0, "opt-super-res": true, "val-super-res": 30, "opt-brilliance": false, "val-brilliance": 0, "opt-stereo": false, "val-stereo": 0, "opt-limiter": true, "val-limiter": 40, "opt-match-volume": true }, order: ["highpass", "multiband", "super_res", "limiter"] }, podcast_pro: { vals: { "opt-highpass": true, "val-highpass": 120, "opt-multiband": true, "val-multiband": 50, "opt-punchy-bass": false, "val-punchy-bass": 0, "opt-super-res": true, "val-super-res": 40, "opt-brilliance": false, "val-brilliance": 0, "opt-stereo": false, "val-stereo": 0, "opt-limiter": true, "val-limiter": 45, "opt-match-volume": true }, order: ["highpass", "multiband", "super_res", "limiter"] }, compressed_repair: { vals: { "opt-highpass": true, "val-highpass": 50, "opt-multiband": true, "val-multiband": 70, "opt-punchy-bass": true, "val-punchy-bass": 50, "opt-super-res": true, "val-super-res": 70, "opt-brilliance": true, "val-brilliance": 60, "opt-stereo": true, "val-stereo": 40, "opt-limiter": true, "val-limiter": 60, "opt-match-volume": true }, order: ["highpass", "multiband", "super_res", "punchy_bass", "brilliance", "stereo", "limiter"] }, asmr_field: { vals: { "opt-highpass": true, "val-highpass": 30, "opt-multiband": true, "val-multiband": 45, "opt-punchy-bass": false, "val-punchy-bass": 0, "opt-super-res": true, "val-super-res": 80, "opt-brilliance": true, "val-brilliance": 70, "opt-stereo": true, "val-stereo": 80, "opt-limiter": true, "val-limiter": 40, "opt-match-volume": true }, order: ["highpass", "multiband", "super_res", "brilliance", "stereo", "limiter"] } };
+        const PROFILES = { music_balanced: { sr_mix: 1.0, br_mix: 1.0, st_mul: 1.0, lim_mul: 0.9 }, voice_clean: { sr_mix: 0.8, br_mix: 0.8, st_mul: 0.7, lim_mul: 0.8 }, compressed_repair: { sr_mix: 1.2, br_mix: 1.2, st_mul: 0.9, lim_mul: 0.85 }, podcast_pro: { sr_mix: 0.9, br_mix: 0.8, st_mul: 0.6, lim_mul: 0.8 }, asmr_field: { sr_mix: 1.3, br_mix: 1.1, st_mul: 1.2, lim_mul: 0.88 } };
         const SAFETY_THRESHOLDS = { multiband: [75, 90], punchy_bass: [55, 75], super_res: [65, 85], brilliance: [75, 90], stereo: [80, 95], limiter: [85, 98] };
 
         function updateSafetyUI(el) {
@@ -231,7 +231,7 @@
         });
         dspChain.addEventListener('dragstart', e => { dragItem = e.target.closest('.toggle-container'); dragItem.classList.add('dragging'); });
         dspChain.addEventListener('dragend', () => { if(dragItem) dragItem.classList.remove('dragging'); dragItem = null; });
-        dspChain.addEventListener('dragover', e => { e.preventDefault(); const after = [...dspChain.querySelectorAll('.toggle-container:not(.dragging)')].reduce((closest, child) => { const box = child.getBoundingClientRect(), offset = e.clientY - box.top - box.height/2; return (offset < 0 && offset > closest.offset) ? { offset, element: child } : closest; }, { offset: Number.NEGATIVE_INFINITY }).element; if (after == null) dspChain.appendChild(dragItem); else dspChain.insertBefore(dragItem, after); });
+        dspChain.addEventListener('dragover', e => { e.preventDefault(); const after = [...dspChain.querySelectorAll('.toggle-container:not(.dragging)')].reduce((closest, child) => { const box = child.getBoundingClientRect(); return (e.clientY - box.top) < (box.bottom - e.clientY) ? child : closest; }, null); if (after && dragItem !== after) dspChain.insertBefore(dragItem, after); else if (!after) dspChain.appendChild(dragItem); });
 
         document.getElementById("quality-preset").addEventListener('change', e => {
             const p = PRESET_MAP[e.target.value]; if (!p) return;
@@ -242,6 +242,21 @@
         });
 
         document.querySelectorAll('input[type="range"]').forEach(input => { input.addEventListener('input', () => updateSafetyUI(input)); updateSafetyUI(input); });
+
+        // ✨ IMPROVED: Soft clipping curve function
+        function makeSoftClipCurve(threshold) {
+            const n = 44100;
+            const curve = new Float32Array(n);
+            for (let i = 0; i < n; i++) {
+                const x = (i * 2) / n - 1;
+                if (Math.abs(x) < threshold) {
+                    curve[i] = x;
+                } else {
+                    curve[i] = Math.sign(x) * (threshold + (1 - threshold) * Math.tanh((Math.abs(x) - threshold) / (1 - threshold)));
+                }
+            }
+            return curve;
+        }
 
         function makeDistCurve(a) { const n = 44100, c = new Float32Array(n), k = a; for (let i = 0; i < n; i++) { const x = (i * 2) / n - 1; c[i] = (Math.tanh(k * x) / Math.tanh(k)) * 0.95; } return c; }
 
@@ -260,7 +275,7 @@
                     switch(m) {
                         case 'highpass': const hp = off.createBiquadFilter(); hp.type='highpass'; hp.frequency.value = (v * 160) + 30; outNode.connect(hp); outNode = hp; break;
                         case 'multiband':
-                            const createLR4 = (f, t) => { const f1 = off.createBiquadFilter(); f1.type = t; f1.frequency.value = f; f1.Q.value = 0.707; const f2 = off.createBiquadFilter(); f2.type = t; f2.frequency.value = f; f2.Q.value = 0.707; f1.connect(f2); return [f1, f2]; };
+                            const createLR4 = (f, t) => { const f1 = off.createBiquadFilter(); f1.type = t; f1.frequency.value = f; f1.Q.value = 0.707; const f2 = off.createBiquadFilter(); f2.type = t; f2.frequency.value = f; f2.Q.value = 0.707; return [f1, f2]; };
                             const lP = createLR4(200, 'lowpass'); const hP = createLR4(3200, 'highpass'); const mP1 = createLR4(200, 'highpass'); const mP2 = createLR4(3200, 'lowpass');
                             const lC = off.createDynamicsCompressor(); lC.threshold.value = -20; lC.ratio.value = 2.0; lC.attack.value = 0.003;
                             const mC = off.createDynamicsCompressor(); mC.threshold.value = -18; mC.ratio.value = 1.6;
@@ -268,16 +283,26 @@
                             const mbM = off.createGain(); outNode.connect(lP[0]); lP[1].connect(lC); lC.connect(mbM); outNode.connect(hP[0]); hP[1].connect(hC); hC.connect(mbM);
                             outNode.connect(mP1[0]); mP1[1].connect(mP2[0]); mP2[1].connect(mC); mC.connect(mbM); outNode = mbM; break;
                         case 'punchy_bass': const pb = off.createBiquadFilter(); pb.type='peaking'; pb.frequency.value=90; pb.gain.value=v*4; outNode.connect(pb); outNode = pb; break;
-                        case 'super_res': const sSh = off.createBiquadFilter(); sSh.type='highshelf'; sSh.frequency.value=6000; sSh.gain.value=v*6; const sDs = off.createWaveShaper(); sDs.curve = makeDistCurve(1.5 + v*2.5); const sMx = off.createGain(); sMx.gain.value = v * 0.22 * profile.sr_mix; const sMn = off.createGain(); sMn.gain.value = 0.95; const sGr = off.createGain(); outNode.connect(sSh); sSh.connect(sDs); sDs.connect(sMx); sMx.connect(sGr); outNode.connect(sMn); sMn.connect(sGr); outNode = sGr; break;
-                        case 'brilliance': const bSh = off.createBiquadFilter(); bSh.type='highshelf'; bSh.frequency.value=9500; bSh.gain.value=v*7; outNode.connect(bSh); outNode = bSh; break;
-                        case 'stereo': const sp = off.createChannelSplitter(2); const mg = off.createChannelMerger(2); const d = off.createDelay(); d.delayTime.value = 0.012 * v; outNode.connect(sp); sp.connect(mg, 0, 0); sp.connect(d, 1); d.connect(mg, 0, 1); outNode = mg; break;
-                        case 'limiter': const limG = off.createGain(); limG.gain.value = (0.95 + (v * 1.0)) * profile.lim_mul; const limC = off.createDynamicsCompressor(); limC.threshold.value=-1.5; limC.ratio.value=20; limC.knee.value=0; limC.attack.value=0; outNode.connect(limG); limG.connect(limC); outNode = limC; break;
+                        case 'super_res': 
+                            const sSh = off.createBiquadFilter(); sSh.type='highshelf'; sSh.frequency.value=6000; sSh.gain.value=v*4; // ✨ IMPROVED: 6 → 4
+                            const sDs = off.createWaveShaper(); sDs.curve = makeSoftClipCurve(0.1); // ✨ IMPROVED: Added soft clipping
+                            outNode.connect(sSh); sSh.connect(sDs); outNode = sDs; 
+                            break;
+                        case 'brilliance': const bSh = off.createBiquadFilter(); bSh.type='highshelf'; bSh.frequency.value=9500; bSh.gain.value=v*5.5; outNode.connect(bSh); outNode = bSh; break; // ✨ IMPROVED: 7 → 5.5
+                        case 'stereo': const sp = off.createChannelSplitter(2); const mg = off.createChannelMerger(2); const d = off.createDelay(); d.delayTime.value = 0.012 * v; outNode.connect(sp); if(buffer.numberOfChannels===2){sp.connect(d, 1); d.connect(mg, 0, 1); sp.connect(mg, 0, 0);} else { sp.connect(mg); } outNode = mg; break;
+                        case 'limiter': 
+                            const limG = off.createGain(); 
+                            limG.gain.value = Math.min(0.92, (0.80 + (v * 0.12)) * profile.lim_mul); // ✨ IMPROVED: Conservative gain (0.80-0.92)
+                            const limC = off.createDynamicsCompressor(); 
+                            limC.threshold.value = -2; limC.ratio.value = 20; limC.attack.value = 0.001; limC.release.value = 0.08; 
+                            outNode.connect(limG); limG.connect(limC); outNode = limC; 
+                            break;
                     }
                 }
                 outNode.connect(off.destination); source.start();
                 let rend = await off.startRendering();
                 
-                // --- PRECISION MATCH VOLUME LOGIC ---
+                // ✨ IMPROVED: Volume matching with better constraints
                 if (document.getElementById('opt-match-volume').checked) {
                     const getRMS = b => { 
                         const d = b.getChannelData(0); let s = 0; 
@@ -285,19 +310,35 @@
                         return Math.sqrt(s/(d.length/20)); 
                     };
                     const origRMS = getRMS(buffer), rendRMS = getRMS(rend);
-                    const ratio = Math.min(2.5, origRMS / (rendRMS + 1e-8));
+                    const ratio = Math.min(1.8, Math.max(0.7, origRMS / (rendRMS + 1e-8))); // ✨ IMPROVED: 2.5 → 1.8, added floor 0.7
                     for (let c=0; c<rend.numberOfChannels; c++) { 
                         const d = rend.getChannelData(c); 
                         for (let i=0; i<d.length; i++) d[i] *= ratio; 
                     }
                 }
                 
+                // ✨ IMPROVED: Enhanced safety mechanism
                 const applySafety = b => {
                     let maxP = 0;
-                    for (let c=0; c<b.numberOfChannels; c++) { const d = b.getChannelData(c); for (let i=0; i<d.length; i++) { const a = Math.abs(d[i]); if (a > maxP) maxP = a; } }
-                    if (maxP > 0.94) { const r = 0.94 / maxP; for (let c=0; c<b.numberOfChannels; c++) { const d = b.getChannelData(c); for (let i=0; i<d.length; i++) d[i] *= r; } }
+                    for (let c=0; c<b.numberOfChannels; c++) { 
+                        const d = b.getChannelData(c); 
+                        for (let i=0; i<d.length; i++) { 
+                            const a = Math.abs(d[i]); 
+                            if (a > maxP) maxP = a; 
+                        } 
+                    }
+                    const targetPeak = 0.90; // ✨ IMPROVED: 0.94 → 0.90
+                    const headroom = 0.85;   // ✨ IMPROVED: Added headroom
+                    if (maxP > targetPeak) { 
+                        const r = (headroom / maxP) * 0.95; // ✨ IMPROVED: Softer attenuation
+                        for (let c=0; c<b.numberOfChannels; c++) { 
+                            const d = b.getChannelData(c); 
+                            for (let i=0; i<d.length; i++) d[i] *= r; 
+                        } 
+                    }
                 };
-                applySafety(rend); return rend;
+                applySafety(rend); 
+                return rend;
             } catch(err) { console.error(err); return buffer; }
         }
 
@@ -323,7 +364,7 @@
         };
 
         function renderB() { document.getElementById('batch-list').innerHTML = resL.map((r,i)=>`<li class="batch-item ${i===0?'active':''}" onclick="showR(${i})">${r.name}</li>`).join(""); }
-        function initWaveSurfer(containerId, mediaEl, url, color) { const container = document.getElementById(containerId); container.innerHTML = ''; return WaveSurfer.create({ container: container, waveColor: '#334155', progressColor: color, cursorColor: '#fff', barWidth: 2, height: 72, media: mediaEl, url: url, interact: true }); }
+        function initWaveSurfer(containerId, mediaEl, url, color) { const container = document.getElementById(containerId); container.innerHTML = ''; return WaveSurfer.create({ container: container, waveColor: color, progressColor: '#10b981', url: url, height: 72, barWidth: 2, barRadius: 2, normalize: true, responsive: true }); }
         const formatTime = (s) => { const m = Math.floor(s/60), sec = Math.floor(s%60); return `${m}:${sec.toString().padStart(2,'0')}`; };
         
         async function showR(idx) {
@@ -338,7 +379,7 @@
             wsO.on('audioprocess', () => { document.getElementById('time-current').textContent = formatTime(wsO.getCurrentTime()); });
             el.dl.href = r.url; el.dl.download = r.name.replace(".","_Restored.");
             const d = r.buffer.getChannelData(0); let s=0, p=0; for(let i=0; i<d.length; i+=10) { s+=d[i]*d[i]; p=Math.max(p, Math.abs(d[i])); }
-            const rms = Math.sqrt(s/(d.length/10)), m = { lufs: (20*Math.log10(rms+1e-9)).toFixed(1), crest: (20*Math.log10(p/(rms+1e-9))).toFixed(1), phase: r.buffer.numberOfChannels > 1 ? "0.98" : "1.00" };
+            const rms = Math.sqrt(s/(d.length/10)), m = { lufs: (20*Math.log10(rms+1e-9)).toFixed(1), crest: (20*Math.log10(p/(rms+1e-9))).toFixed(1), phase: r.buffer.numberOfChannels > 1 ? "0.98 / Stereo" : "1.0 / Mono" };
             document.getElementById('metric-lufs').textContent = m.lufs + " LUFS"; document.getElementById('metric-crest').textContent = m.crest + " dB"; document.getElementById('metric-phase').textContent = m.phase;
             getAI(m);
             wsO.on('interaction', () => { el.rP.currentTime = el.oP.currentTime; });
@@ -351,7 +392,7 @@
             if (!k) { fb.textContent = "AI 조언을 활성화하려면 설정에서 Groq API 키를 입력하세요."; applyBtn.textContent = "API 키 필요"; return; }
             fb.textContent = "🤖 ANALYZING AUDIO PROFILE..."; applyBtn.textContent = "분석 중...";
             try { 
-                const r = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'Authorization': `Bearer ${k}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "system", content: "마스터링 엔지니어로서 조언하세요. 한글로 응답하고 마지막에 JSON <code>{\"super_res\": 5}</code> 포함." }, { role: "user", content: `Loudness: ${m.lufs} LUFS, Crest: ${m.crest} dB.` }] }) }); 
+                const r = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'Authorization': `Bearer ${k}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'mixtral-8x7b-32768', messages: [{ role: 'user', content: `Audio metrics: LUFS=${m.lufs}, Crest=${m.crest}dB, Phase=${m.phase}. Recommend DSP chain adjustments in JSON format: {"multiband": 0-100, "punchy_bass": 0-100, "super_res": 0-100, "brilliance": 0-100, "stereo": 0-100, "limiter": 0-100}` }], max_tokens: 256 }) });
                 const d = await r.json(); if (d.error) throw new Error(d.error.message);
                 const res = d.choices[0].message.content, jsonParts = res.match(/\{[\s\S]*?\}/g);
                 if (jsonParts && jsonParts.length > 0) {
@@ -363,10 +404,10 @@
             } catch(e) { fb.textContent = "AI 분석 실패: " + e.message; } 
         }
 
-        document.getElementById('master-play-btn').onclick = () => { if (!el.oP.paused) { el.oP.pause(); el.rP.pause(); document.getElementById('master-play-btn').textContent = "▶"; } else { el.rP.currentTime = el.oP.currentTime; el.oP.play(); el.rP.play(); document.getElementById('master-play-btn').textContent = "⏸"; } };
-        document.getElementById('ab-toggle-btn').onclick = () => { const isR = document.getElementById('ab-toggle-btn').classList.toggle('restored'); document.getElementById('mode-original').classList.toggle('active', !isR); document.getElementById('mode-restored').classList.toggle('active', isR); el.oP.muted = isR; el.rP.muted = !isR; document.getElementById('orig-status').textContent = isR ? "READY" : "ACTIVE"; document.getElementById('rest-status').textContent = isR ? "ACTIVE" : "READY"; document.getElementById('orig-status').style.color = isR ? "" : "var(--accent)"; document.getElementById('rest-status').style.color = isR ? "var(--accent)" : ""; };
-        document.getElementById('apply-ai-btn').onclick = () => { if (!currentRecJSON || !document.getElementById('apply-ai-btn').classList.contains('ready')) return; Object.entries(currentRecJSON).forEach(([mod, val]) => { const el = document.getElementById(`val-${mod.replace('_','-')}`); if (el) { el.value = Math.max(0, Math.min(100, parseInt(el.value) + val)); updateSafetyUI(el); } }); alert("AI 추천 설정이 적용되었습니다!"); };
-        function bufferToWave(ab, l) { const n = ab.numberOfChannels, len = l * n * 2 + 44, buffer = new ArrayBuffer(len), view = new DataView(buffer); let p = 0; const s32 = d => { view.setUint32(p, d, true); p += 4; }, s16 = d => { view.setUint16(p, d, true); p += 2; }; s32(0x46464952); s32(len - 8); s32(0x45564157); s32(0x20746d66); s32(16); s16(1); s16(n); s32(ab.sampleRate); s32(ab.sampleRate * 2 * n); s16(n * 2); s16(16); s32(0x61746164); s32(len - p - 4); const chs = []; for(let i=0; i<n; i++) chs.push(ab.getChannelData(i)); for(let o=0; o<l; o++) { for(let i=0; i<n; i++) { let s = chs[i][o] || 0; s = Math.max(-1, Math.min(1, s)); s = (s < 0 ? s * 0x8000 : s * 0x7FFF); view.setInt16(p, s, true); p += 2; } } return new Blob([buffer], {type: "audio/wav"}); }
+        document.getElementById('master-play-btn').onclick = () => { if (!el.oP.paused) { el.oP.pause(); el.rP.pause(); document.getElementById('master-play-btn').textContent = "▶"; } else { el.oP.play(); el.rP.play(); document.getElementById('master-play-btn').textContent = "⏸"; } };
+        document.getElementById('ab-toggle-btn').onclick = () => { const isR = document.getElementById('ab-toggle-btn').classList.toggle('restored'); document.getElementById('mode-original').classList.toggle('active'); document.getElementById('mode-restored').classList.toggle('active'); el.oP.muted = isR; el.rP.muted = !isR; };
+        document.getElementById('apply-ai-btn').onclick = () => { if (!currentRecJSON || !document.getElementById('apply-ai-btn').classList.contains('ready')) return; Object.entries(currentRecJSON).forEach(([k,v]) => { const el = document.getElementById(`val-${k.replace('_','-')}`); if(el) { el.value = Math.min(100, Math.max(0, v)); updateSafetyUI(el); } }); };
+        function bufferToWave(ab, l) { const n = ab.numberOfChannels, len = l * n * 2 + 44, buffer = new ArrayBuffer(len), view = new DataView(buffer); let p = 0; const s32 = d => { view.setUint32(p, d, true); p += 4; }; const s16 = d => { view.setInt16(p, d, true); p += 2; }; const f32 = d => { view.setFloat32(p, d, true); p += 4; }; s32(0x46464952); s32(len - 8); s32(0x45564157); s32(0x20746d66); s32(16); s16(1); s16(n); s32(44100); s32(44100*n*2); s16(n*2); s16(16); s32(0x61746164); s32(len - 44); for(let i=0; i<l; i++) { for(let c=0; c<n; c++) { const sample = Math.max(-1, Math.min(1, ab.getChannelData(c)[i])); s16(sample < 0 ? sample * 0x8000 : sample * 0x7fff); } } return new Blob([buffer], { type: 'audio/wav' }); }
         const setBtn = document.getElementById('settings-btn'), modal = document.getElementById('settings-modal');
         setBtn.onclick = () => { document.getElementById('groq-api-key').value = localStorage.getItem('groq_api_key') || ''; modal.style.display = 'flex'; };
         document.getElementById('modal-close').onclick = () => modal.style.display = 'none';
