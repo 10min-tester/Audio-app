@@ -218,7 +218,36 @@
         document.getElementById("quality-preset").addEventListener('change', e => { const p = PRESET_MAP[e.target.value]; if (!p) return; Object.entries(p.vals).forEach(([id, val]) => { const el = document.getElementById(id); if (el) { if (el.type === "checkbox") el.checked = val; else el.value = val; updateSafetyUI(el); } }); const chain = document.getElementById('dsp-chain'); p.order.forEach(mod => { const item = chain.querySelector(`[data-module="${mod}"]`); if (item) chain.appendChild(item); }); const mv = chain.querySelector('[data-module="match_volume"]'); if (mv) chain.appendChild(mv); });
         document.querySelectorAll('input[type="range"]').forEach(input => { input.addEventListener('input', () => updateSafetyUI(input)); updateSafetyUI(input); });
         function makeSoftClipCurve(threshold) { const n = 44100; const curve = new Float32Array(n); for (let i = 0; i < n; i++) { const x = (i * 2) / n - 1; if (Math.abs(x) < threshold) { curve[i] = x; } else { curve[i] = Math.sign(x) * (threshold + (1 - threshold) * Math.tanh((Math.abs(x) - threshold) / (1 - threshold))); } } return curve; }
-        function calculateRMS(buffer) { const data = buffer.getChannelData(0); let sum = 0; const step = Math.max(1, Math.floor(data.length / 10000)); for (let i = 0; i < data.length; i += step) { sum += data[i] * data[i]; } return Math.sqrt(sum / (data.length / step)); }
+        function calculateRMS(buffer) {
+    const data = buffer.getChannelData(0);
+
+    let sum = 0;
+    let peak = 0;
+
+    for (let i = 0; i < data.length; i++) {
+        const v = data[i];
+        sum += v * v;
+        const abs = Math.abs(v);
+        if (abs > peak) peak = abs;
+    }
+
+    const rms = Math.sqrt(sum / data.length);
+
+    // 안정화된 loudness estimate (AI용)
+    let loudness = 20 * Math.log10(rms + 1e-12);
+
+    // peak 보정 (과도한 왜곡 방지)
+    const crest = peak / (rms + 1e-12);
+    loudness -= Math.min(6, (crest - 3) * 0.8);
+
+    return rms;
+}
+
+for (let i = 0; i < data.length; i++) {
+  sum += data[i] * data[i];
+}
+
+return Math.sqrt(sum / data.length); for (let i = 0; i < data.length; i += step) { sum += data[i] * data[i]; } return Math.sqrt(sum / (data.length / step)); }
         function createOfflineContext(channels, length, sampleRate) { const OfflineContextClass = (window.OfflineAudioContext || window.webkitOfflineAudioContext); return new OfflineContextClass(channels, length, sampleRate); }
         async function runLegacyDSP(buffer, chainOrder, presetName) {
             try {
@@ -227,6 +256,10 @@
                 const profile = PROFILES[presetName] || PROFILES.music_balanced;
                 let outNode = source;
                 const warmth = off.createBiquadFilter(); warmth.type='lowshelf'; warmth.frequency.value=250; warmth.gain.value=profile.warmth; outNode.connect(warmth); outNode = warmth;
+                const preGain = off.createGain();
+preGain.gain.value = 0.85; // headroom 확보
+outNode.connect(preGain);
+outNode = preGain;
                 for (const m of chainOrder) {
                     const opt = document.getElementById(`opt-${m.replace('_','-')}`);
                     if (m === 'match_volume' || !opt || !opt.checked) continue;
@@ -239,12 +272,71 @@
                         case 'super_res': const sSh = off.createBiquadFilter(); sSh.type='highshelf'; sSh.frequency.value=6000; sSh.gain.value=v*profile.sr_gain; const sDs = off.createWaveShaper(); sDs.curve = makeSoftClipCurve(0.1); outNode.connect(sSh); sSh.connect(sDs); outNode = sDs; break;
                         case 'brilliance': if (profile.br_gain > 0) { const bSh = off.createBiquadFilter(); bSh.type='highshelf'; bSh.frequency.value=9500; bSh.gain.value=v*profile.br_gain; outNode.connect(bSh); outNode = bSh; } break;
                         case 'stereo': if (buffer.numberOfChannels >= 2) { const sp = off.createChannelSplitter(2); const mg = off.createChannelMerger(2); const d = off.createDelay(); d.delayTime.value = 0.012 * v; outNode.connect(sp); sp.connect(d, 1); d.connect(mg, 0, 1); sp.connect(mg, 0, 0); outNode = mg; } break;
-                        case 'limiter': const limG = off.createGain(); limG.gain.value = Math.min(0.92, (0.80 + (v * 0.12)) * profile.lim_mul); const limC = off.createDynamicsCompressor(); limC.threshold.value = -2; limC.ratio.value = 20; limC.attack.value = 0.001; limC.release.value = 0.08; outNode.connect(limG); limG.connect(limC); outNode = limC; break;
                     }
                 }
-                outNode.connect(off.destination); source.start(); let rend = await off.startRendering();
+                const finalLimiter = off.createDynamicsCompressor();
+finalLimiter.threshold.value = -1;
+finalLimiter.ratio.value = 20;
+finalLimiter.attack.value = 0.001;
+finalLimiter.release.value = 0.05;
+
+outNode.connect(finalLimiter);
+outNode = finalLimiter;
+                outNode.connect(off.destination); source.start(); let rend = await off.startRendering(); const safetyGain = off.createGain();
+safetyGain.gain.value = 0.85;
+
+const safetyNode = off.createGain();
+safetyNode.gain.value = 0.85;
+
+rend = (function applySafety(buffer) {
+    const maxP = 0;
+
+    for (let c = 0; c < buffer.numberOfChannels; c++) {
+        const d = buffer.getChannelData(c);
+        for (let i = 0; i < d.length; i++) {
+            const a = Math.abs(d[i]);
+            if (a > maxP) maxP = a;
+        }
+    }
+
+    if (maxP > 0.9) {
+        const r = 0.85 / maxP;
+
+        for (let c = 0; c < buffer.numberOfChannels; c++) {
+            const d = buffer.getChannelData(c);
+            for (let i = 0; i < d.length; i++) {
+                d[i] *= r;
+            }
+        }
+    }
+
+    return buffer;
+})(rend); // safety processing
+let maxP = 0;
+
+for (let c = 0; c < rend.numberOfChannels; c++) {
+  const d = rend.getChannelData(c);
+  for (let i = 0; i < d.length; i++) {
+    const a = Math.abs(d[i]);
+    if (a > maxP) maxP = a;
+  }
+}
+
+const targetPeak = 0.90;
+const headroom = 0.85;
+
+if (maxP > targetPeak) {
+  const r = (headroom / maxP) * 0.95;
+
+  for (let c = 0; c < rend.numberOfChannels; c++) {
+    const d = rend.getChannelData(c);
+    for (let i = 0; i < d.length; i++) {
+      d[i] *= r;
+    }
+  }
+}
                 if (document.getElementById('opt-match-volume').checked) { const origRMS = calculateRMS(buffer); const rendRMS = calculateRMS(rend); const ratio = Math.min(1.8, Math.max(0.7, origRMS / (rendRMS + 1e-8))); for (let c=0; c<rend.numberOfChannels; c++) { const d = rend.getChannelData(c); for (let i=0; i<d.length; i++) d[i] *= ratio; } }
-                const applySafety = b => { let maxP = 0; for (let c=0; c<b.numberOfChannels; c++) { const d = b.getChannelData(c); for (let i=0; i<d.length; i++) { const a = Math.abs(d[i]); if (a > maxP) maxP = a; } } const targetPeak = 0.90; const headroom = 0.85; if (maxP > targetPeak) { const r = (headroom / maxP) * 0.95; for (let c=0; c<b.numberOfChannels; c++) { const d = b.getChannelData(c); for (let i=0; i<d.length; i++) d[i] *= r; } } }; applySafety(rend); source.buffer = null; return rend;
+                applySafety(rend); source.buffer = null; return rend;
             } catch(err) { console.error(err); return buffer; }
         }
         let aCtx, wsO, wsR, resL = [], currentRecJSON = null, lastF = [];
@@ -255,7 +347,71 @@
         function renderB() { document.getElementById('batch-list').innerHTML = resL.map((r,i)=>`<li class="batch-item ${i===0?'active':''}" onclick="showR(${i})">${r.name}</li>`).join(""); }
         function initWaveSurfer(containerId, mediaEl, url, color) { const container = document.getElementById(containerId); container.innerHTML = ''; return WaveSurfer.create({ container: container, waveColor: color, progressColor: '#10b981', url: url, height: 72, barWidth: 2, barRadius: 2, normalize: true, responsive: true }); }
         const formatTime = (s) => { const m = Math.floor(s/60), sec = Math.floor(s%60); return `${m}:${sec.toString().padStart(2,'0')}`; };
-        async function showR(idx) { const r = resL[idx]; [...document.getElementById('batch-list').children].forEach((e,i)=>e.classList.toggle('active',i===idx)); el.result.style.display='block'; if (wsO) wsO.destroy(); if (wsR) wsR.destroy(); el.oP.src = r.orig; el.rP.src = r.url; const isRestored = document.getElementById('ab-toggle-btn').classList.contains('restored'); el.oP.muted = isRestored; el.rP.muted = !isRestored; wsO = initWaveSurfer('waveform-original', el.oP, r.orig, '#10b981'); wsR = initWaveSurfer('waveform-restored', el.rP, r.url, '#4f8cff'); wsO.on('ready', () => { document.getElementById('time-total').textContent = formatTime(wsO.getDuration()); }); wsO.on('audioprocess', () => { document.getElementById('time-current').textContent = formatTime(wsO.getCurrentTime()); }); el.dl.href = r.url; el.dl.download = r.name.replace(".","_Restored."); const d = r.buffer.getChannelData(0); let s=0, p=0; for(let i=0; i<d.length; i+=10) { s+=d[i]*d[i]; p=Math.max(p, Math.abs(d[i])); } const rms = Math.sqrt(s/(d.length/10)), m = { lufs: (20*Math.log10(rms+1e-9)).toFixed(1), crest: (20*Math.log10(p/(rms+1e-9))).toFixed(1), phase: r.buffer.numberOfChannels > 1 ? "0.98 / Stereo" : "1.0 / Mono" }; document.getElementById('metric-lufs').textContent = m.lufs + " LUFS"; document.getElementById('metric-crest').textContent = m.crest + " dB"; document.getElementById('metric-phase').textContent = m.phase; getAI(m); wsO.on('interaction', () => { el.rP.currentTime = el.oP.currentTime; }); wsR.on('interaction', () => { el.oP.currentTime = el.rP.currentTime; }); }
+        async function showR(idx) { const r = resL[idx]; [...document.getElementById('batch-list').children].forEach((e,i)=>e.classList.toggle('active',i===idx)); el.result.style.display='block'; if (wsO) wsO.destroy(); if (wsR) wsR.destroy(); el.oP.src = r.orig; el.rP.src = r.url; const isRestored = document.getElementById('ab-toggle-btn').classList.contains('restored'); el.oP.muted = isRestored; el.rP.muted = !isRestored; wsO = initWaveSurfer('waveform-original', el.oP, r.orig, '#10b981'); wsR = initWaveSurfer('waveform-restored', el.rP, r.url, '#4f8cff'); wsO.on('ready', () => { document.getElementById('time-total').textContent = formatTime(wsO.getDuration()); }); wsO.on('timeupdate', () => { document.getElementById('time-current').textContent = formatTime(wsO.getCurrentTime()); }); el.dl.href = r.url; el.dl.download = r.name.replace(".","_Restored."); const d = r.buffer.getChannelData(0); let s = 0;
+let p = 0;
+
+for (let i = 0; i < d.length; i++) {
+    const v = d[i];
+    s += v * v;
+    if (Math.abs(v) > p) p = Math.abs(v);
+}
+
+const rms = Math.sqrt(s / d.length);
+
+let estimatedLUFS = 20 * Math.log10(rms + 1e-12);
+
+// 안정화 (AI 튐 방지)
+const crest = p / (rms + 1e-12);
+estimatedLUFS -= Math.min(6, (crest - 3) * 0.8);
+
+if (rms < 0.00001) {
+    estimatedLUFS = -60;
+}
+
+estimatedLUFS = Math.max(-60, Math.min(0, estimatedLUFS));
+
+if (!Number.isFinite(estimatedLUFS)) {
+    estimatedLUFS = -24;
+}
+
+estimatedLUFS =
+    Math.max(
+        -60,
+        Math.min(0, estimatedLUFS)
+    );
+
+let crestValue =
+    20 * Math.log10(
+        p / (rms + 1e-9)
+    );
+
+if (!Number.isFinite(crestValue)) {
+    crestValue = 12;
+}
+
+crestValue =
+    Math.max(
+        3,
+        Math.min(24, crestValue)
+    );
+
+const m = {
+
+    lufs:
+        estimatedLUFS.toFixed(1),
+
+    crest:
+        crestValue.toFixed(1),
+
+    phase:
+        r.buffer.numberOfChannels > 1
+            ? "0.98 / Stereo"
+            : "1.0 / Mono"
+};
+document.getElementById('metric-lufs').textContent = m.lufs;
+document.getElementById('metric-crest').textContent = m.crest;
+document.getElementById('metric-phase').textContent = m.phase;
+}
         async function getAI(m) {
     const k = (localStorage.getItem('groq_api_key') || '').trim();
 
@@ -281,7 +437,6 @@
 
         const prompt = `
 Return ONLY valid JSON.
-
 Do not include:
 - markdown
 - explanations
@@ -307,6 +462,8 @@ Audio Metrics:
 LUFS = ${m.lufs}
 Crest = ${m.crest}
 Phase = ${m.phase}
+
+LUFS is RMS-based approximate value (range -60 to 0, may be unstable).
 `;
 
         const response = await fetch(
@@ -381,14 +538,43 @@ Phase = ${m.phase}
         }
 
         const safe = {
-            multiband: clamp(parsed.multiband),
-            punchy_bass: clamp(parsed.punchy_bass),
-            super_res: clamp(parsed.super_res),
-            brilliance: clamp(parsed.brilliance),
-            stereo: clamp(parsed.stereo),
-            limiter: clamp(parsed.limiter)
-        };
 
+    multiband:
+        clampDSP(
+            'multiband',
+            parsed.multiband
+        ),
+
+    punchy_bass:
+        clampDSP(
+            'punchy_bass',
+            parsed.punchy_bass
+        ),
+
+    super_res:
+        clampDSP(
+            'super_res',
+            parsed.super_res
+        ),
+
+    brilliance:
+        clampDSP(
+            'brilliance',
+            parsed.brilliance
+        ),
+
+    stereo:
+        clampDSP(
+            'stereo',
+            parsed.stereo
+        ),
+
+    limiter:
+        clampDSP(
+            'limiter',
+            parsed.limiter
+        )
+};
         currentRecJSON = safe;
 
         fb.textContent =
@@ -423,21 +609,44 @@ Phase = ${m.phase}
     }
 }
 
-function clamp(v) {
+function clampDSP(name, value) {
 
-    const n = Number(v);
+    const n = Number(value);
 
-    if (Number.isNaN(n)) return 50;
+    if (Number.isNaN(n)) {
+        return 50;
+    }
+
+    const limits = {
+
+        multiband: [20, 75],
+
+        punchy_bass: [0, 60],
+
+        super_res: [0, 70],
+
+        brilliance: [0, 70],
+
+        stereo: [0, 75],
+
+        limiter: [20, 85]
+    };
+
+    const range =
+        limits[name] || [0, 100];
 
     return Math.max(
-        0,
-        Math.min(100, Math.round(n))
+        range[0],
+        Math.min(
+            range[1],
+            Math.round(n)
+        )
     );
 }
         document.getElementById('master-play-btn').onclick = () => { if (!el.oP.paused) { el.oP.pause(); el.rP.pause(); document.getElementById('master-play-btn').textContent = "▶"; } else { el.oP.play(); el.rP.play(); document.getElementById('master-play-btn').textContent = "⏸"; } };
         document.getElementById('ab-toggle-btn').onclick = () => { const isR = document.getElementById('ab-toggle-btn').classList.toggle('restored'); document.getElementById('mode-original').classList.toggle('active'); document.getElementById('mode-restored').classList.toggle('active'); el.oP.muted = isR; el.rP.muted = !isR; };
         document.getElementById('apply-ai-btn').onclick = () => { if (!currentRecJSON || !document.getElementById('apply-ai-btn').classList.contains('ready')) return; Object.entries(currentRecJSON).forEach(([k,v]) => { const el = document.getElementById(`val-${k.replace('_','-')}`); if(el) { el.value = Math.min(100, Math.max(0, v)); updateSafetyUI(el); } }); };
-        function bufferToWave(ab, l) { const n = ab.numberOfChannels, len = l * n * 2 + 44, buffer = new ArrayBuffer(len), view = new DataView(buffer); let p = 0; const s32 = d => { view.setUint32(p, d, true); p += 4; }; const s16 = d => { view.setInt16(p, d, true); p += 2; }; const f32 = d => { view.setFloat32(p, d, true); p += 4; }; s32(0x46464952); s32(len - 8); s32(0x45564157); s32(0x20746d66); s32(16); s16(1); s16(n); s32(44100); s32(44100*n*2); s16(n*2); s16(16); s32(0x61746164); s32(len - 44); for(let i=0; i<l; i++) { for(let c=0; c<n; c++) { const sample = Math.max(-1, Math.min(1, ab.getChannelData(c)[i])); s16(sample < 0 ? sample * 0x8000 : sample * 0x7fff); } } return new Blob([buffer], { type: 'audio/wav' }); }
+        function bufferToWave(ab, l) { const n = ab.numberOfChannels, len = l * n * 2 + 44, buffer = new ArrayBuffer(len), view = new DataView(buffer); let p = 0; const s32 = d => { view.setUint32(p, d, true); p += 4; }; const s16 = d => { view.setInt16(p, d, true); p += 2; }; const f32 = d => { view.setFloat32(p, d, true); p += 4; }; s32(0x46464952); s32(len - 8); s32(0x45564157); s32(0x20746d66); s32(16); s16(1); s16(n); s32(ab.sampleRate); s32(ab.sampleRate*n*2); s16(n*2); s16(16); s32(0x61746164); s32(len - 44); for(let i=0; i<l; i++) { for(let c=0; c<n; c++) { const sample = Math.max(-1, Math.min(1, ab.getChannelData(c)[i])); s16(sample < 0 ? sample * 0x8000 : sample * 0x7fff); } } return new Blob([buffer], { type: 'audio/wav' }); }
         const setBtn = document.getElementById('settings-btn'), modal = document.getElementById('settings-modal');
         setBtn.onclick = () => { document.getElementById('groq-api-key').value = localStorage.getItem('groq_api_key') || ''; modal.style.display = 'flex'; };
         document.getElementById('modal-close').onclick = () => modal.style.display = 'none';
