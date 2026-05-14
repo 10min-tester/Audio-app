@@ -112,7 +112,7 @@
         <header class="header">
             <div class="header-flex">
                 <div>
-                    <h1 class="title">Analog Soul Engine <span class="badge">V4 ENHANCED</span></h1>
+                    <h1 class="title">Analog Soul Engine <span class="badge">V4 ENHANCED+</span></h1>
                 </div>
                 <button type="button" id="settings-btn" style="background:none; border:none; cursor:pointer; font-size:1.5rem; opacity:0.6; transition:0.2s;">⚙️</button>
             </div>
@@ -206,7 +206,7 @@
 
     <script>
         const PRESET_MAP = { music_balanced: { vals: { "opt-highpass": true, "val-highpass": 75, "opt-multiband": true, "val-multiband": 55, "opt-punchy-bass": true, "val-punchy-bass": 30, "opt-super-res": true, "val-super-res": 50, "opt-brilliance": true, "val-brilliance": 45, "opt-stereo": true, "val-stereo": 60, "opt-limiter": true, "val-limiter": 50, "opt-match-volume": true }, order: ["highpass", "multiband", "punchy_bass", "super_res", "brilliance", "stereo", "limiter"] }, voice_clean: { vals: { "opt-highpass": true, "val-highpass": 100, "opt-multiband": true, "val-multiband": 40, "opt-punchy-bass": false, "val-punchy-bass": 0, "opt-super-res": true, "val-super-res": 30, "opt-brilliance": false, "val-brilliance": 0, "opt-stereo": false, "val-stereo": 0, "opt-limiter": true, "val-limiter": 40, "opt-match-volume": true }, order: ["highpass", "multiband", "super_res", "limiter"] }, podcast_pro: { vals: { "opt-highpass": true, "val-highpass": 120, "opt-multiband": true, "val-multiband": 50, "opt-punchy-bass": false, "val-punchy-bass": 0, "opt-super-res": true, "val-super-res": 40, "opt-brilliance": false, "val-brilliance": 0, "opt-stereo": false, "val-stereo": 0, "opt-limiter": true, "val-limiter": 45, "opt-match-volume": true }, order: ["highpass", "multiband", "super_res", "limiter"] }, compressed_repair: { vals: { "opt-highpass": true, "val-highpass": 50, "opt-multiband": true, "val-multiband": 70, "opt-punchy-bass": true, "val-punchy-bass": 50, "opt-super-res": true, "val-super-res": 70, "opt-brilliance": true, "val-brilliance": 60, "opt-stereo": true, "val-stereo": 40, "opt-limiter": true, "val-limiter": 60, "opt-match-volume": true }, order: ["highpass", "multiband", "super_res", "punchy_bass", "brilliance", "stereo", "limiter"] }, asmr_field: { vals: { "opt-highpass": true, "val-highpass": 30, "opt-multiband": true, "val-multiband": 45, "opt-punchy-bass": false, "val-punchy-bass": 0, "opt-super-res": true, "val-super-res": 80, "opt-brilliance": true, "val-brilliance": 70, "opt-stereo": true, "val-stereo": 80, "opt-limiter": true, "val-limiter": 40, "opt-match-volume": true }, order: ["highpass", "multiband", "super_res", "brilliance", "stereo", "limiter"] } };
-        const PROFILES = { music_balanced: { sr_mix: 1.0, br_mix: 1.0, st_mul: 1.0, lim_mul: 0.9 }, voice_clean: { sr_mix: 0.8, br_mix: 0.8, st_mul: 0.7, lim_mul: 0.8 }, compressed_repair: { sr_mix: 1.2, br_mix: 1.2, st_mul: 0.9, lim_mul: 0.85 }, podcast_pro: { sr_mix: 0.9, br_mix: 0.8, st_mul: 0.6, lim_mul: 0.8 }, asmr_field: { sr_mix: 1.3, br_mix: 1.1, st_mul: 1.2, lim_mul: 0.88 } };
+        const PROFILES = { music_balanced: { sr_mix: 1.0, br_mix: 1.0, st_mul: 1.0, lim_mul: 0.9, warmth: 1.5 }, voice_clean: { sr_mix: 0.8, br_mix: 0.8, st_mul: 0.7, lim_mul: 0.8, warmth: 0.8 }, compressed_repair: { sr_mix: 1.2, br_mix: 1.2, st_mul: 0.9, lim_mul: 0.85, warmth: 2.0 }, podcast_pro: { sr_mix: 0.9, br_mix: 0.8, st_mul: 0.6, lim_mul: 0.8, warmth: 1.2 }, asmr_field: { sr_mix: 1.3, br_mix: 1.1, st_mul: 1.2, lim_mul: 0.88, warmth: 1.0 } };
         const SAFETY_THRESHOLDS = { multiband: [75, 90], punchy_bass: [55, 75], super_res: [65, 85], brilliance: [75, 90], stereo: [80, 95], limiter: [85, 98] };
 
         function updateSafetyUI(el) {
@@ -260,20 +260,51 @@
 
         function makeDistCurve(a) { const n = 44100, c = new Float32Array(n), k = a; for (let i = 0; i < n; i++) { const x = (i * 2) / n - 1; c[i] = (Math.tanh(k * x) / Math.tanh(k)) * 0.95; } return c; }
 
+        // ✨ IMPROVED: Optimized RMS calculation
+        function calculateRMS(buffer) {
+            const data = buffer.getChannelData(0);
+            let sum = 0;
+            const step = Math.max(1, Math.floor(data.length / 10000)); // ✨ Adaptive sampling
+            for (let i = 0; i < data.length; i += step) {
+                sum += data[i] * data[i];
+            }
+            return Math.sqrt(sum / (data.length / step));
+        }
+
+        // ✨ IMPROVED: Safari-compatible OfflineAudioContext
+        function createOfflineContext(channels, length, sampleRate) {
+            const OfflineContextClass = (window.OfflineAudioContext || window.webkitOfflineAudioContext);
+            return new OfflineContextClass(channels, length, sampleRate);
+        }
+
         async function runLegacyDSP(buffer, chainOrder, presetName) {
             try {
-                const off = new OfflineAudioContext(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
+                const off = createOfflineContext(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
                 const source = off.createBufferSource(); source.buffer = buffer;
                 const profile = PROFILES[presetName] || PROFILES.music_balanced;
                 let outNode = source;
-                const warmth = off.createBiquadFilter(); warmth.type='lowshelf'; warmth.frequency.value=250; warmth.gain.value=1.5; outNode.connect(warmth); outNode = warmth;
+                
+                // ✨ IMPROVED: Preset-aware warmth filter
+                const warmth = off.createBiquadFilter(); 
+                warmth.type='lowshelf'; 
+                warmth.frequency.value=250; 
+                warmth.gain.value=profile.warmth; // ✨ Now varies by preset
+                outNode.connect(warmth); 
+                outNode = warmth;
+                
                 for (const m of chainOrder) {
                     const opt = document.getElementById(`opt-${m.replace('_','-')}`);
                     if (m === 'match_volume' || !opt || !opt.checked) continue;
                     const valEl = document.getElementById(`val-${m.replace('_','-')}`);
                     const v = valEl ? parseFloat(valEl.value) / 100.0 : 0.5;
                     switch(m) {
-                        case 'highpass': const hp = off.createBiquadFilter(); hp.type='highpass'; hp.frequency.value = (v * 160) + 30; outNode.connect(hp); outNode = hp; break;
+                        case 'highpass': 
+                            const hp = off.createBiquadFilter(); 
+                            hp.type='highpass'; 
+                            hp.frequency.value = (v * 160) + 30; 
+                            outNode.connect(hp); 
+                            outNode = hp; 
+                            break;
                         case 'multiband':
                             const createLR4 = (f, t) => { const f1 = off.createBiquadFilter(); f1.type = t; f1.frequency.value = f; f1.Q.value = 0.707; const f2 = off.createBiquadFilter(); f2.type = t; f2.frequency.value = f; f2.Q.value = 0.707; return [f1, f2]; };
                             const lP = createLR4(200, 'lowpass'); const hP = createLR4(3200, 'highpass'); const mP1 = createLR4(200, 'highpass'); const mP2 = createLR4(3200, 'lowpass');
@@ -281,36 +312,72 @@
                             const mC = off.createDynamicsCompressor(); mC.threshold.value = -18; mC.ratio.value = 1.6;
                             const hC = off.createDynamicsCompressor(); hC.threshold.value = -22; hC.ratio.value = 1.4;
                             const mbM = off.createGain(); outNode.connect(lP[0]); lP[1].connect(lC); lC.connect(mbM); outNode.connect(hP[0]); hP[1].connect(hC); hC.connect(mbM);
-                            outNode.connect(mP1[0]); mP1[1].connect(mP2[0]); mP2[1].connect(mC); mC.connect(mbM); outNode = mbM; break;
-                        case 'punchy_bass': const pb = off.createBiquadFilter(); pb.type='peaking'; pb.frequency.value=90; pb.gain.value=v*4; outNode.connect(pb); outNode = pb; break;
-                        case 'super_res': 
-                            const sSh = off.createBiquadFilter(); sSh.type='highshelf'; sSh.frequency.value=6000; sSh.gain.value=v*4; // ✨ IMPROVED: 6 → 4
-                            const sDs = off.createWaveShaper(); sDs.curve = makeSoftClipCurve(0.1); // ✨ IMPROVED: Added soft clipping
-                            outNode.connect(sSh); sSh.connect(sDs); outNode = sDs; 
+                            outNode.connect(mP1[0]); mP1[1].connect(mP2[0]); mP2[1].connect(mC); mC.connect(mbM); outNode = mbM; 
                             break;
-                        case 'brilliance': const bSh = off.createBiquadFilter(); bSh.type='highshelf'; bSh.frequency.value=9500; bSh.gain.value=v*5.5; outNode.connect(bSh); outNode = bSh; break; // ✨ IMPROVED: 7 → 5.5
-                        case 'stereo': const sp = off.createChannelSplitter(2); const mg = off.createChannelMerger(2); const d = off.createDelay(); d.delayTime.value = 0.012 * v; outNode.connect(sp); if(buffer.numberOfChannels===2){sp.connect(d, 1); d.connect(mg, 0, 1); sp.connect(mg, 0, 0);} else { sp.connect(mg); } outNode = mg; break;
+                        case 'punchy_bass': 
+                            const pb = off.createBiquadFilter(); 
+                            pb.type='peaking'; 
+                            pb.frequency.value=90; 
+                            pb.gain.value=v*4; 
+                            outNode.connect(pb); 
+                            outNode = pb; 
+                            break;
+                        case 'super_res': 
+                            const sSh = off.createBiquadFilter(); 
+                            sSh.type='highshelf'; 
+                            sSh.frequency.value=6000; 
+                            sSh.gain.value=v*4;
+                            const sDs = off.createWaveShaper(); 
+                            sDs.curve = makeSoftClipCurve(0.1);
+                            outNode.connect(sSh); 
+                            sSh.connect(sDs); 
+                            outNode = sDs; 
+                            break;
+                        case 'brilliance': 
+                            const bSh = off.createBiquadFilter(); 
+                            bSh.type='highshelf'; 
+                            bSh.frequency.value=9500; 
+                            bSh.gain.value=v*5.5; 
+                            outNode.connect(bSh); 
+                            outNode = bSh; 
+                            break;
+                        case 'stereo': 
+                            // ✨ IMPROVED: Channel-aware stereo processing
+                            if (buffer.numberOfChannels >= 2) {
+                                const sp = off.createChannelSplitter(2); 
+                                const mg = off.createChannelMerger(2); 
+                                const d = off.createDelay(); 
+                                d.delayTime.value = 0.012 * v; 
+                                outNode.connect(sp); 
+                                sp.connect(d, 1); 
+                                d.connect(mg, 0, 1); 
+                                sp.connect(mg, 0, 0); 
+                                outNode = mg;
+                            }
+                            break;
                         case 'limiter': 
                             const limG = off.createGain(); 
-                            limG.gain.value = Math.min(0.92, (0.80 + (v * 0.12)) * profile.lim_mul); // ✨ IMPROVED: Conservative gain (0.80-0.92)
+                            limG.gain.value = Math.min(0.92, (0.80 + (v * 0.12)) * profile.lim_mul);
                             const limC = off.createDynamicsCompressor(); 
-                            limC.threshold.value = -2; limC.ratio.value = 20; limC.attack.value = 0.001; limC.release.value = 0.08; 
-                            outNode.connect(limG); limG.connect(limC); outNode = limC; 
+                            limC.threshold.value = -2; 
+                            limC.ratio.value = 20; 
+                            limC.attack.value = 0.001; 
+                            limC.release.value = 0.08; 
+                            outNode.connect(limG); 
+                            limG.connect(limC); 
+                            outNode = limC; 
                             break;
                     }
                 }
-                outNode.connect(off.destination); source.start();
+                outNode.connect(off.destination); 
+                source.start();
                 let rend = await off.startRendering();
                 
                 // ✨ IMPROVED: Volume matching with better constraints
                 if (document.getElementById('opt-match-volume').checked) {
-                    const getRMS = b => { 
-                        const d = b.getChannelData(0); let s = 0; 
-                        for(let i=0; i<d.length; i+=20) s += d[i]*d[i]; 
-                        return Math.sqrt(s/(d.length/20)); 
-                    };
-                    const origRMS = getRMS(buffer), rendRMS = getRMS(rend);
-                    const ratio = Math.min(1.8, Math.max(0.7, origRMS / (rendRMS + 1e-8))); // ✨ IMPROVED: 2.5 → 1.8, added floor 0.7
+                    const origRMS = calculateRMS(buffer);
+                    const rendRMS = calculateRMS(rend);
+                    const ratio = Math.min(1.8, Math.max(0.7, origRMS / (rendRMS + 1e-8)));
                     for (let c=0; c<rend.numberOfChannels; c++) { 
                         const d = rend.getChannelData(c); 
                         for (let i=0; i<d.length; i++) d[i] *= ratio; 
@@ -327,17 +394,21 @@
                             if (a > maxP) maxP = a; 
                         } 
                     }
-                    const targetPeak = 0.90; // ✨ IMPROVED: 0.94 → 0.90
-                    const headroom = 0.85;   // ✨ IMPROVED: Added headroom
+                    const targetPeak = 0.90;
+                    const headroom = 0.85;
                     if (maxP > targetPeak) { 
-                        const r = (headroom / maxP) * 0.95; // ✨ IMPROVED: Softer attenuation
+                        const r = (headroom / maxP) * 0.95;
                         for (let c=0; c<b.numberOfChannels; c++) { 
                             const d = b.getChannelData(c); 
                             for (let i=0; i<d.length; i++) d[i] *= r; 
                         } 
                     }
                 };
-                applySafety(rend); 
+                applySafety(rend);
+                
+                // ✨ IMPROVED: Memory cleanup
+                source.buffer = null;
+                
                 return rend;
             } catch(err) { console.error(err); return buffer; }
         }
