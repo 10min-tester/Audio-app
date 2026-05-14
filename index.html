@@ -112,7 +112,7 @@
         <header class="header">
             <div class="header-flex">
                 <div>
-                    <h1 class="title">Analog Soul Engine <span class="badge">V4 ENHANCED+</span></h1>
+                    <h1 class="title">Analog Soul Engine <span class="badge">V5 FIXED</span></h1>
                 </div>
                 <button type="button" id="settings-btn" style="background:none; border:none; cursor:pointer; font-size:1.5rem; opacity:0.6; transition:0.2s;">⚙️</button>
             </div>
@@ -206,275 +206,57 @@
 
     <script>
         const PRESET_MAP = { music_balanced: { vals: { "opt-highpass": true, "val-highpass": 75, "opt-multiband": true, "val-multiband": 55, "opt-punchy-bass": true, "val-punchy-bass": 30, "opt-super-res": true, "val-super-res": 50, "opt-brilliance": true, "val-brilliance": 45, "opt-stereo": true, "val-stereo": 60, "opt-limiter": true, "val-limiter": 50, "opt-match-volume": true }, order: ["highpass", "multiband", "punchy_bass", "super_res", "brilliance", "stereo", "limiter"] }, voice_clean: { vals: { "opt-highpass": true, "val-highpass": 100, "opt-multiband": true, "val-multiband": 40, "opt-punchy-bass": false, "val-punchy-bass": 0, "opt-super-res": true, "val-super-res": 30, "opt-brilliance": false, "val-brilliance": 0, "opt-stereo": false, "val-stereo": 0, "opt-limiter": true, "val-limiter": 40, "opt-match-volume": true }, order: ["highpass", "multiband", "super_res", "limiter"] }, podcast_pro: { vals: { "opt-highpass": true, "val-highpass": 120, "opt-multiband": true, "val-multiband": 50, "opt-punchy-bass": false, "val-punchy-bass": 0, "opt-super-res": true, "val-super-res": 40, "opt-brilliance": false, "val-brilliance": 0, "opt-stereo": false, "val-stereo": 0, "opt-limiter": true, "val-limiter": 45, "opt-match-volume": true }, order: ["highpass", "multiband", "super_res", "limiter"] }, compressed_repair: { vals: { "opt-highpass": true, "val-highpass": 50, "opt-multiband": true, "val-multiband": 70, "opt-punchy-bass": true, "val-punchy-bass": 50, "opt-super-res": true, "val-super-res": 70, "opt-brilliance": true, "val-brilliance": 60, "opt-stereo": true, "val-stereo": 40, "opt-limiter": true, "val-limiter": 60, "opt-match-volume": true }, order: ["highpass", "multiband", "super_res", "punchy_bass", "brilliance", "stereo", "limiter"] }, asmr_field: { vals: { "opt-highpass": true, "val-highpass": 30, "opt-multiband": true, "val-multiband": 45, "opt-punchy-bass": false, "val-punchy-bass": 0, "opt-super-res": true, "val-super-res": 80, "opt-brilliance": true, "val-brilliance": 70, "opt-stereo": true, "val-stereo": 80, "opt-limiter": true, "val-limiter": 40, "opt-match-volume": true }, order: ["highpass", "multiband", "super_res", "brilliance", "stereo", "limiter"] } };
-        const PROFILES = { music_balanced: { sr_mix: 1.0, br_mix: 1.0, st_mul: 1.0, lim_mul: 0.9, warmth: 1.5 }, voice_clean: { sr_mix: 0.8, br_mix: 0.8, st_mul: 0.7, lim_mul: 0.8, warmth: 0.8 }, compressed_repair: { sr_mix: 1.2, br_mix: 1.2, st_mul: 0.9, lim_mul: 0.85, warmth: 2.0 }, podcast_pro: { sr_mix: 0.9, br_mix: 0.8, st_mul: 0.6, lim_mul: 0.8, warmth: 1.2 }, asmr_field: { sr_mix: 1.3, br_mix: 1.1, st_mul: 1.2, lim_mul: 0.88, warmth: 1.0 } };
+        const PROFILES = { music_balanced: { sr_gain: 4.0, br_gain: 5.5, st_mul: 1.0, lim_mul: 0.9, warmth: 1.5 }, voice_clean: { sr_gain: 2.5, br_gain: 0, st_mul: 0.7, lim_mul: 0.8, warmth: 0.8 }, compressed_repair: { sr_gain: 5.5, br_gain: 6.5, st_mul: 0.9, lim_mul: 0.85, warmth: 2.0 }, podcast_pro: { sr_gain: 3.0, br_gain: 0, st_mul: 0.6, lim_mul: 0.8, warmth: 1.2 }, asmr_field: { sr_gain: 6.0, br_gain: 6.0, st_mul: 1.2, lim_mul: 0.88, warmth: 1.0 } };
         const SAFETY_THRESHOLDS = { multiband: [75, 90], punchy_bass: [55, 75], super_res: [65, 85], brilliance: [75, 90], stereo: [80, 95], limiter: [85, 98] };
 
-        function updateSafetyUI(el) {
-            if (!el) return;
-            const mod = el.id.replace('val-','').replace('-','_');
-            const val = parseInt(el.value);
-            const container = el.closest('.toggle-container');
-            if (!container) return;
-            const thresholds = SAFETY_THRESHOLDS[mod];
-            if (thresholds) {
-                el.classList.remove('warn-slider', 'danger-slider'); container.classList.remove('warning-bg', 'danger-bg');
-                if (val >= thresholds[1]) { el.classList.add('danger-slider'); container.classList.add('danger-bg'); } 
-                else if (val >= thresholds[0]) { el.classList.add('warn-slider'); container.classList.add('warning-bg'); }
-            }
-        }
-
+        function updateSafetyUI(el) { if (!el) return; const mod = el.id.replace('val-','').replace('-','_'); const val = parseInt(el.value); const container = el.closest('.toggle-container'); if (!container) return; const thresholds = SAFETY_THRESHOLDS[mod]; if (thresholds) { el.classList.remove('warn-slider', 'danger-slider'); container.classList.remove('warning-bg', 'danger-bg'); if (val >= thresholds[1]) { el.classList.add('danger-slider'); container.classList.add('danger-bg'); } else if (val >= thresholds[0]) { el.classList.add('warn-slider'); container.classList.add('warning-bg'); } } }
         const dspChain = document.getElementById('dsp-chain'); let dragItem = null;
-        dspChain.addEventListener('mousedown', e => { 
-            const handle = e.target.closest('.drag-handle');
-            const containers = dspChain.querySelectorAll('.toggle-container');
-            containers.forEach(c => c.setAttribute('draggable', handle && e.target === handle ? 'true' : 'false'));
-        });
+        dspChain.addEventListener('mousedown', e => { const handle = e.target.closest('.drag-handle'); const containers = dspChain.querySelectorAll('.toggle-container'); containers.forEach(c => c.setAttribute('draggable', handle && e.target === handle ? 'true' : 'false')); });
         dspChain.addEventListener('dragstart', e => { dragItem = e.target.closest('.toggle-container'); dragItem.classList.add('dragging'); });
         dspChain.addEventListener('dragend', () => { if(dragItem) dragItem.classList.remove('dragging'); dragItem = null; });
         dspChain.addEventListener('dragover', e => { e.preventDefault(); const after = [...dspChain.querySelectorAll('.toggle-container:not(.dragging)')].reduce((closest, child) => { const box = child.getBoundingClientRect(); return (e.clientY - box.top) < (box.bottom - e.clientY) ? child : closest; }, null); if (after && dragItem !== after) dspChain.insertBefore(dragItem, after); else if (!after) dspChain.appendChild(dragItem); });
-
-        document.getElementById("quality-preset").addEventListener('change', e => {
-            const p = PRESET_MAP[e.target.value]; if (!p) return;
-            Object.entries(p.vals).forEach(([id, val]) => { const el = document.getElementById(id); if (el) { if (el.type === "checkbox") el.checked = val; else el.value = val; updateSafetyUI(el); } });
-            const chain = document.getElementById('dsp-chain');
-            p.order.forEach(mod => { const item = chain.querySelector(`[data-module="${mod}"]`); if (item) chain.appendChild(item); });
-            const mv = chain.querySelector('[data-module="match_volume"]'); if (mv) chain.appendChild(mv);
-        });
-
+        document.getElementById("quality-preset").addEventListener('change', e => { const p = PRESET_MAP[e.target.value]; if (!p) return; Object.entries(p.vals).forEach(([id, val]) => { const el = document.getElementById(id); if (el) { if (el.type === "checkbox") el.checked = val; else el.value = val; updateSafetyUI(el); } }); const chain = document.getElementById('dsp-chain'); p.order.forEach(mod => { const item = chain.querySelector(`[data-module="${mod}"]`); if (item) chain.appendChild(item); }); const mv = chain.querySelector('[data-module="match_volume"]'); if (mv) chain.appendChild(mv); });
         document.querySelectorAll('input[type="range"]').forEach(input => { input.addEventListener('input', () => updateSafetyUI(input)); updateSafetyUI(input); });
-
-        // ✨ IMPROVED: Soft clipping curve function
-        function makeSoftClipCurve(threshold) {
-            const n = 44100;
-            const curve = new Float32Array(n);
-            for (let i = 0; i < n; i++) {
-                const x = (i * 2) / n - 1;
-                if (Math.abs(x) < threshold) {
-                    curve[i] = x;
-                } else {
-                    curve[i] = Math.sign(x) * (threshold + (1 - threshold) * Math.tanh((Math.abs(x) - threshold) / (1 - threshold)));
-                }
-            }
-            return curve;
-        }
-
-        function makeDistCurve(a) { const n = 44100, c = new Float32Array(n), k = a; for (let i = 0; i < n; i++) { const x = (i * 2) / n - 1; c[i] = (Math.tanh(k * x) / Math.tanh(k)) * 0.95; } return c; }
-
-        // ✨ IMPROVED: Optimized RMS calculation
-        function calculateRMS(buffer) {
-            const data = buffer.getChannelData(0);
-            let sum = 0;
-            const step = Math.max(1, Math.floor(data.length / 10000)); // ✨ Adaptive sampling
-            for (let i = 0; i < data.length; i += step) {
-                sum += data[i] * data[i];
-            }
-            return Math.sqrt(sum / (data.length / step));
-        }
-
-        // ✨ IMPROVED: Safari-compatible OfflineAudioContext
-        function createOfflineContext(channels, length, sampleRate) {
-            const OfflineContextClass = (window.OfflineAudioContext || window.webkitOfflineAudioContext);
-            return new OfflineContextClass(channels, length, sampleRate);
-        }
-
+        function makeSoftClipCurve(threshold) { const n = 44100; const curve = new Float32Array(n); for (let i = 0; i < n; i++) { const x = (i * 2) / n - 1; if (Math.abs(x) < threshold) { curve[i] = x; } else { curve[i] = Math.sign(x) * (threshold + (1 - threshold) * Math.tanh((Math.abs(x) - threshold) / (1 - threshold))); } } return curve; }
+        function calculateRMS(buffer) { const data = buffer.getChannelData(0); let sum = 0; const step = Math.max(1, Math.floor(data.length / 10000)); for (let i = 0; i < data.length; i += step) { sum += data[i] * data[i]; } return Math.sqrt(sum / (data.length / step)); }
+        function createOfflineContext(channels, length, sampleRate) { const OfflineContextClass = (window.OfflineAudioContext || window.webkitOfflineAudioContext); return new OfflineContextClass(channels, length, sampleRate); }
         async function runLegacyDSP(buffer, chainOrder, presetName) {
             try {
                 const off = createOfflineContext(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
                 const source = off.createBufferSource(); source.buffer = buffer;
                 const profile = PROFILES[presetName] || PROFILES.music_balanced;
                 let outNode = source;
-                
-                // ✨ IMPROVED: Preset-aware warmth filter
-                const warmth = off.createBiquadFilter(); 
-                warmth.type='lowshelf'; 
-                warmth.frequency.value=250; 
-                warmth.gain.value=profile.warmth; // ✨ Now varies by preset
-                outNode.connect(warmth); 
-                outNode = warmth;
-                
+                const warmth = off.createBiquadFilter(); warmth.type='lowshelf'; warmth.frequency.value=250; warmth.gain.value=profile.warmth; outNode.connect(warmth); outNode = warmth;
                 for (const m of chainOrder) {
                     const opt = document.getElementById(`opt-${m.replace('_','-')}`);
                     if (m === 'match_volume' || !opt || !opt.checked) continue;
                     const valEl = document.getElementById(`val-${m.replace('_','-')}`);
                     const v = valEl ? parseFloat(valEl.value) / 100.0 : 0.5;
                     switch(m) {
-                        case 'highpass': 
-                            const hp = off.createBiquadFilter(); 
-                            hp.type='highpass'; 
-                            hp.frequency.value = (v * 160) + 30; 
-                            outNode.connect(hp); 
-                            outNode = hp; 
-                            break;
-                        case 'multiband':
-                            const createLR4 = (f, t) => { const f1 = off.createBiquadFilter(); f1.type = t; f1.frequency.value = f; f1.Q.value = 0.707; const f2 = off.createBiquadFilter(); f2.type = t; f2.frequency.value = f; f2.Q.value = 0.707; return [f1, f2]; };
-                            const lP = createLR4(200, 'lowpass'); const hP = createLR4(3200, 'highpass'); const mP1 = createLR4(200, 'highpass'); const mP2 = createLR4(3200, 'lowpass');
-                            const lC = off.createDynamicsCompressor(); lC.threshold.value = -20; lC.ratio.value = 2.0; lC.attack.value = 0.003;
-                            const mC = off.createDynamicsCompressor(); mC.threshold.value = -18; mC.ratio.value = 1.6;
-                            const hC = off.createDynamicsCompressor(); hC.threshold.value = -22; hC.ratio.value = 1.4;
-                            const mbM = off.createGain(); outNode.connect(lP[0]); lP[1].connect(lC); lC.connect(mbM); outNode.connect(hP[0]); hP[1].connect(hC); hC.connect(mbM);
-                            outNode.connect(mP1[0]); mP1[1].connect(mP2[0]); mP2[1].connect(mC); mC.connect(mbM); outNode = mbM; 
-                            break;
-                        case 'punchy_bass': 
-                            const pb = off.createBiquadFilter(); 
-                            pb.type='peaking'; 
-                            pb.frequency.value=90; 
-                            pb.gain.value=v*4; 
-                            outNode.connect(pb); 
-                            outNode = pb; 
-                            break;
-                        case 'super_res': 
-                            const sSh = off.createBiquadFilter(); 
-                            sSh.type='highshelf'; 
-                            sSh.frequency.value=6000; 
-                            sSh.gain.value=v*4;
-                            const sDs = off.createWaveShaper(); 
-                            sDs.curve = makeSoftClipCurve(0.1);
-                            outNode.connect(sSh); 
-                            sSh.connect(sDs); 
-                            outNode = sDs; 
-                            break;
-                        case 'brilliance': 
-                            const bSh = off.createBiquadFilter(); 
-                            bSh.type='highshelf'; 
-                            bSh.frequency.value=9500; 
-                            bSh.gain.value=v*5.5; 
-                            outNode.connect(bSh); 
-                            outNode = bSh; 
-                            break;
-                        case 'stereo': 
-                            // ✨ IMPROVED: Channel-aware stereo processing
-                            if (buffer.numberOfChannels >= 2) {
-                                const sp = off.createChannelSplitter(2); 
-                                const mg = off.createChannelMerger(2); 
-                                const d = off.createDelay(); 
-                                d.delayTime.value = 0.012 * v; 
-                                outNode.connect(sp); 
-                                sp.connect(d, 1); 
-                                d.connect(mg, 0, 1); 
-                                sp.connect(mg, 0, 0); 
-                                outNode = mg;
-                            }
-                            break;
-                        case 'limiter': 
-                            const limG = off.createGain(); 
-                            limG.gain.value = Math.min(0.92, (0.80 + (v * 0.12)) * profile.lim_mul);
-                            const limC = off.createDynamicsCompressor(); 
-                            limC.threshold.value = -2; 
-                            limC.ratio.value = 20; 
-                            limC.attack.value = 0.001; 
-                            limC.release.value = 0.08; 
-                            outNode.connect(limG); 
-                            limG.connect(limC); 
-                            outNode = limC; 
-                            break;
+                        case 'highpass': const hp = off.createBiquadFilter(); hp.type='highpass'; hp.frequency.value = (v * 160) + 30; outNode.connect(hp); outNode = hp; break;
+                        case 'multiband': const createLR4 = (f, t) => { const f1 = off.createBiquadFilter(); f1.type = t; f1.frequency.value = f; f1.Q.value = 0.707; const f2 = off.createBiquadFilter(); f2.type = t; f2.frequency.value = f; f2.Q.value = 0.707; return [f1, f2]; }; const lP = createLR4(200, 'lowpass'); const hP = createLR4(3200, 'highpass'); const mP1 = createLR4(200, 'highpass'); const mP2 = createLR4(3200, 'lowpass'); const lC = off.createDynamicsCompressor(); lC.threshold.value = -20; lC.ratio.value = 2.0; lC.attack.value = 0.003; const mC = off.createDynamicsCompressor(); mC.threshold.value = -18; mC.ratio.value = 1.6; const hC = off.createDynamicsCompressor(); hC.threshold.value = -22; hC.ratio.value = 1.4; const mbM = off.createGain(); outNode.connect(lP[0]); lP[1].connect(lC); lC.connect(mbM); outNode.connect(hP[0]); hP[1].connect(hC); hC.connect(mbM); outNode.connect(mP1[0]); mP1[1].connect(mP2[0]); mP2[1].connect(mC); mC.connect(mbM); outNode = mbM; break;
+                        case 'punchy_bass': const pb = off.createBiquadFilter(); pb.type='peaking'; pb.frequency.value=90; pb.gain.value=v*4; outNode.connect(pb); outNode = pb; break;
+                        case 'super_res': const sSh = off.createBiquadFilter(); sSh.type='highshelf'; sSh.frequency.value=6000; sSh.gain.value=v*profile.sr_gain; const sDs = off.createWaveShaper(); sDs.curve = makeSoftClipCurve(0.1); outNode.connect(sSh); sSh.connect(sDs); outNode = sDs; break;
+                        case 'brilliance': if (profile.br_gain > 0) { const bSh = off.createBiquadFilter(); bSh.type='highshelf'; bSh.frequency.value=9500; bSh.gain.value=v*profile.br_gain; outNode.connect(bSh); outNode = bSh; } break;
+                        case 'stereo': if (buffer.numberOfChannels >= 2) { const sp = off.createChannelSplitter(2); const mg = off.createChannelMerger(2); const d = off.createDelay(); d.delayTime.value = 0.012 * v; outNode.connect(sp); sp.connect(d, 1); d.connect(mg, 0, 1); sp.connect(mg, 0, 0); outNode = mg; } break;
+                        case 'limiter': const limG = off.createGain(); limG.gain.value = Math.min(0.92, (0.80 + (v * 0.12)) * profile.lim_mul); const limC = off.createDynamicsCompressor(); limC.threshold.value = -2; limC.ratio.value = 20; limC.attack.value = 0.001; limC.release.value = 0.08; outNode.connect(limG); limG.connect(limC); outNode = limC; break;
                     }
                 }
-                outNode.connect(off.destination); 
-                source.start();
-                let rend = await off.startRendering();
-                
-                // ✨ IMPROVED: Volume matching with better constraints
-                if (document.getElementById('opt-match-volume').checked) {
-                    const origRMS = calculateRMS(buffer);
-                    const rendRMS = calculateRMS(rend);
-                    const ratio = Math.min(1.8, Math.max(0.7, origRMS / (rendRMS + 1e-8)));
-                    for (let c=0; c<rend.numberOfChannels; c++) { 
-                        const d = rend.getChannelData(c); 
-                        for (let i=0; i<d.length; i++) d[i] *= ratio; 
-                    }
-                }
-                
-                // ✨ IMPROVED: Enhanced safety mechanism
-                const applySafety = b => {
-                    let maxP = 0;
-                    for (let c=0; c<b.numberOfChannels; c++) { 
-                        const d = b.getChannelData(c); 
-                        for (let i=0; i<d.length; i++) { 
-                            const a = Math.abs(d[i]); 
-                            if (a > maxP) maxP = a; 
-                        } 
-                    }
-                    const targetPeak = 0.90;
-                    const headroom = 0.85;
-                    if (maxP > targetPeak) { 
-                        const r = (headroom / maxP) * 0.95;
-                        for (let c=0; c<b.numberOfChannels; c++) { 
-                            const d = b.getChannelData(c); 
-                            for (let i=0; i<d.length; i++) d[i] *= r; 
-                        } 
-                    }
-                };
-                applySafety(rend);
-                
-                // ✨ IMPROVED: Memory cleanup
-                source.buffer = null;
-                
-                return rend;
+                outNode.connect(off.destination); source.start(); let rend = await off.startRendering();
+                if (document.getElementById('opt-match-volume').checked) { const origRMS = calculateRMS(buffer); const rendRMS = calculateRMS(rend); const ratio = Math.min(1.8, Math.max(0.7, origRMS / (rendRMS + 1e-8))); for (let c=0; c<rend.numberOfChannels; c++) { const d = rend.getChannelData(c); for (let i=0; i<d.length; i++) d[i] *= ratio; } }
+                const applySafety = b => { let maxP = 0; for (let c=0; c<b.numberOfChannels; c++) { const d = b.getChannelData(c); for (let i=0; i<d.length; i++) { const a = Math.abs(d[i]); if (a > maxP) maxP = a; } } const targetPeak = 0.90; const headroom = 0.85; if (maxP > targetPeak) { const r = (headroom / maxP) * 0.95; for (let c=0; c<b.numberOfChannels; c++) { const d = b.getChannelData(c); for (let i=0; i<d.length; i++) d[i] *= r; } } }; applySafety(rend); source.buffer = null; return rend;
             } catch(err) { console.error(err); return buffer; }
         }
-
         let aCtx, wsO, wsR, resL = [], currentRecJSON = null, lastF = [];
         const el = { drop: document.getElementById('drop-zone'), input: document.getElementById('audio-file'), name: document.getElementById('file-name-display'), sub: document.getElementById('submit-btn'), load: document.getElementById('loader'), result: document.getElementById('result-area'), oP: document.getElementById('original-player'), rP: document.getElementById('restored-player'), dl: document.getElementById('download-link') };
         el.drop.onclick = () => el.input.click();
         el.input.onchange = e => { lastF = Array.from(e.target.files); el.name.textContent = lastF.length + "개 파일 선택됨"; el.sub.disabled = lastF.length === 0; };
-        
-        document.getElementById('upload-form').onsubmit = async e => {
-            e.preventDefault(); el.load.style.display='block'; el.result.style.display='none';
-            try {
-                if (!aCtx) aCtx = new (window.AudioContext || window.webkitAudioContext)();
-                resL = []; const ch = [...dspChain.querySelectorAll('.toggle-container')].map(el => el.dataset.module), p = document.getElementById('quality-preset').value;
-                for (let i=0; i<lastF.length; i++) {
-                    const b = await aCtx.decodeAudioData(await lastF[i].arrayBuffer());
-                    const r = await runLegacyDSP(b, ch, p);
-                    const blob = bufferToWave(r, r.length); const u = URL.createObjectURL(blob);
-                    resL.push({ name:lastF[i].name, url:u, blob:blob, orig:URL.createObjectURL(lastF[i]), buffer:r });
-                }
-                if (resL.length > 0) { renderB(); await showR(0); }
-            } catch(err) { alert("처리 중 오류: " + err.message); }
-            el.load.style.display='none';
-        };
-
+        document.getElementById('upload-form').onsubmit = async e => { e.preventDefault(); el.load.style.display='block'; el.result.style.display='none'; try { if (!aCtx) aCtx = new (window.AudioContext || window.webkitAudioContext)(); resL = []; const ch = [...dspChain.querySelectorAll('.toggle-container')].map(el => el.dataset.module), p = document.getElementById('quality-preset').value; for (let i=0; i<lastF.length; i++) { const b = await aCtx.decodeAudioData(await lastF[i].arrayBuffer()); const r = await runLegacyDSP(b, ch, p); const blob = bufferToWave(r, r.length); const u = URL.createObjectURL(blob); resL.push({ name:lastF[i].name, url:u, blob:blob, orig:URL.createObjectURL(lastF[i]), buffer:r }); } if (resL.length > 0) { renderB(); await showR(0); } } catch(err) { alert("처리 중 오류: " + err.message); } el.load.style.display='none'; };
         function renderB() { document.getElementById('batch-list').innerHTML = resL.map((r,i)=>`<li class="batch-item ${i===0?'active':''}" onclick="showR(${i})">${r.name}</li>`).join(""); }
         function initWaveSurfer(containerId, mediaEl, url, color) { const container = document.getElementById(containerId); container.innerHTML = ''; return WaveSurfer.create({ container: container, waveColor: color, progressColor: '#10b981', url: url, height: 72, barWidth: 2, barRadius: 2, normalize: true, responsive: true }); }
         const formatTime = (s) => { const m = Math.floor(s/60), sec = Math.floor(s%60); return `${m}:${sec.toString().padStart(2,'0')}`; };
-        
-        async function showR(idx) {
-            const r = resL[idx]; [...document.getElementById('batch-list').children].forEach((e,i)=>e.classList.toggle('active',i===idx));
-            el.result.style.display='block'; if (wsO) wsO.destroy(); if (wsR) wsR.destroy();
-            el.oP.src = r.orig; el.rP.src = r.url;
-            const isRestored = document.getElementById('ab-toggle-btn').classList.contains('restored');
-            el.oP.muted = isRestored; el.rP.muted = !isRestored;
-            wsO = initWaveSurfer('waveform-original', el.oP, r.orig, '#10b981');
-            wsR = initWaveSurfer('waveform-restored', el.rP, r.url, '#4f8cff');
-            wsO.on('ready', () => { document.getElementById('time-total').textContent = formatTime(wsO.getDuration()); });
-            wsO.on('audioprocess', () => { document.getElementById('time-current').textContent = formatTime(wsO.getCurrentTime()); });
-            el.dl.href = r.url; el.dl.download = r.name.replace(".","_Restored.");
-            const d = r.buffer.getChannelData(0); let s=0, p=0; for(let i=0; i<d.length; i+=10) { s+=d[i]*d[i]; p=Math.max(p, Math.abs(d[i])); }
-            const rms = Math.sqrt(s/(d.length/10)), m = { lufs: (20*Math.log10(rms+1e-9)).toFixed(1), crest: (20*Math.log10(p/(rms+1e-9))).toFixed(1), phase: r.buffer.numberOfChannels > 1 ? "0.98 / Stereo" : "1.0 / Mono" };
-            document.getElementById('metric-lufs').textContent = m.lufs + " LUFS"; document.getElementById('metric-crest').textContent = m.crest + " dB"; document.getElementById('metric-phase').textContent = m.phase;
-            getAI(m);
-            wsO.on('interaction', () => { el.rP.currentTime = el.oP.currentTime; });
-            wsR.on('interaction', () => { el.oP.currentTime = el.rP.currentTime; });
-        }
-        
-        async function getAI(m) { 
-            const k = localStorage.getItem('groq_api_key');
-            const fb = document.getElementById('ai-feedback-text'); const recList = document.getElementById('ai-rec-list'); const applyBtn = document.getElementById('apply-ai-btn');
-            if (!k) { fb.textContent = "AI 조언을 활성화하려면 설정에서 Groq API 키를 입력하세요."; applyBtn.textContent = "API 키 필요"; return; }
-            fb.textContent = "🤖 ANALYZING AUDIO PROFILE..."; applyBtn.textContent = "분석 중...";
-            try { 
-                const r = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'Authorization': `Bearer ${k}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'mixtral-8x7b-32768', messages: [{ role: 'user', content: `Audio metrics: LUFS=${m.lufs}, Crest=${m.crest}dB, Phase=${m.phase}. Recommend DSP chain adjustments in JSON format: {"multiband": 0-100, "punchy_bass": 0-100, "super_res": 0-100, "brilliance": 0-100, "stereo": 0-100, "limiter": 0-100}` }], max_tokens: 256 }) });
-                const d = await r.json(); if (d.error) throw new Error(d.error.message);
-                const res = d.choices[0].message.content, jsonParts = res.match(/\{[\s\S]*?\}/g);
-                if (jsonParts && jsonParts.length > 0) {
-                    currentRecJSON = JSON.parse(jsonParts[jsonParts.length - 1]);
-                    fb.textContent = res.split('<code>')[0].replace(/\{[\s\S]*?\}/g, "").trim();
-                    recList.innerHTML = "✨ Smart Tuning 분석 완료! 최적의 파라미터가 준비되었습니다.";
-                    applyBtn.textContent = "✨ APPLY SMART TUNING"; applyBtn.classList.add('ready');
-                }
-            } catch(e) { fb.textContent = "AI 분석 실패: " + e.message; } 
-        }
-
+        async function showR(idx) { const r = resL[idx]; [...document.getElementById('batch-list').children].forEach((e,i)=>e.classList.toggle('active',i===idx)); el.result.style.display='block'; if (wsO) wsO.destroy(); if (wsR) wsR.destroy(); el.oP.src = r.orig; el.rP.src = r.url; const isRestored = document.getElementById('ab-toggle-btn').classList.contains('restored'); el.oP.muted = isRestored; el.rP.muted = !isRestored; wsO = initWaveSurfer('waveform-original', el.oP, r.orig, '#10b981'); wsR = initWaveSurfer('waveform-restored', el.rP, r.url, '#4f8cff'); wsO.on('ready', () => { document.getElementById('time-total').textContent = formatTime(wsO.getDuration()); }); wsO.on('audioprocess', () => { document.getElementById('time-current').textContent = formatTime(wsO.getCurrentTime()); }); el.dl.href = r.url; el.dl.download = r.name.replace(".","_Restored."); const d = r.buffer.getChannelData(0); let s=0, p=0; for(let i=0; i<d.length; i+=10) { s+=d[i]*d[i]; p=Math.max(p, Math.abs(d[i])); } const rms = Math.sqrt(s/(d.length/10)), m = { lufs: (20*Math.log10(rms+1e-9)).toFixed(1), crest: (20*Math.log10(p/(rms+1e-9))).toFixed(1), phase: r.buffer.numberOfChannels > 1 ? "0.98 / Stereo" : "1.0 / Mono" }; document.getElementById('metric-lufs').textContent = m.lufs + " LUFS"; document.getElementById('metric-crest').textContent = m.crest + " dB"; document.getElementById('metric-phase').textContent = m.phase; getAI(m); wsO.on('interaction', () => { el.rP.currentTime = el.oP.currentTime; }); wsR.on('interaction', () => { el.oP.currentTime = el.rP.currentTime; }); }
+        async function getAI(m) { const k = localStorage.getItem('groq_api_key'); const fb = document.getElementById('ai-feedback-text'); const recList = document.getElementById('ai-rec-list'); const applyBtn = document.getElementById('apply-ai-btn'); if (!k) { fb.textContent = "AI 조언을 활성화하려면 설정에서 Groq API 키를 입력하세요."; applyBtn.textContent = "API 키 필요"; return; } fb.textContent = "🤖 ANALYZING AUDIO PROFILE..."; applyBtn.textContent = "분석 중..."; try { const r = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'Authorization': `Bearer ${k}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'mixtral-8x7b-32768', messages: [{ role: 'user', content: `Audio metrics: LUFS=${m.lufs}, Crest=${m.crest}dB, Phase=${m.phase}. Recommend DSP chain adjustments in JSON format: {"multiband": 0-100, "punchy_bass": 0-100, "super_res": 0-100, "brilliance": 0-100, "stereo": 0-100, "limiter": 0-100}` }], max_tokens: 256 }) }); const d = await r.json(); if (d.error) throw new Error(d.error.message); const res = d.choices[0].message.content, jsonParts = res.match(/\{[\s\S]*?\}/g); if (jsonParts && jsonParts.length > 0) { currentRecJSON = JSON.parse(jsonParts[jsonParts.length - 1]); fb.textContent = res.split('<code>')[0].replace(/\{[\s\S]*?\}/g, "").trim(); recList.innerHTML = "✨ Smart Tuning 분석 완료! 최적의 파라미터가 준비되었습니다."; applyBtn.textContent = "✨ APPLY SMART TUNING"; applyBtn.classList.add('ready'); } } catch(e) { fb.textContent = "AI 분석 실패: " + e.message; } }
         document.getElementById('master-play-btn').onclick = () => { if (!el.oP.paused) { el.oP.pause(); el.rP.pause(); document.getElementById('master-play-btn').textContent = "▶"; } else { el.oP.play(); el.rP.play(); document.getElementById('master-play-btn').textContent = "⏸"; } };
         document.getElementById('ab-toggle-btn').onclick = () => { const isR = document.getElementById('ab-toggle-btn').classList.toggle('restored'); document.getElementById('mode-original').classList.toggle('active'); document.getElementById('mode-restored').classList.toggle('active'); el.oP.muted = isR; el.rP.muted = !isR; };
         document.getElementById('apply-ai-btn').onclick = () => { if (!currentRecJSON || !document.getElementById('apply-ai-btn').classList.contains('ready')) return; Object.entries(currentRecJSON).forEach(([k,v]) => { const el = document.getElementById(`val-${k.replace('_','-')}`); if(el) { el.value = Math.min(100, Math.max(0, v)); updateSafetyUI(el); } }); };
